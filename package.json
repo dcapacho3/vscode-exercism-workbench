@@ -1,0 +1,309 @@
+{
+  "name": "exercism-workbench",
+  "displayName": "Exercism Workbench",
+  "description": "A progress-aware Exercism workspace for VS Code: browse learning paths, download exercises, run tests, and submit solutions.",
+  "version": "0.5.0",
+  "publisher": "dcapacho3",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Education",
+    "Other"
+  ],
+  "icon": "media/workbench-icon.png",
+  "keywords": [
+    "exercism",
+    "programming challenges",
+    "practice",
+    "algorithms",
+    "coding exercises"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcapacho3/vscode-exercism-workbench"
+  },
+  "homepage": "https://github.com/dcapacho3/vscode-exercism-workbench#readme",
+  "bugs": {
+    "url": "https://github.com/dcapacho3/vscode-exercism-workbench/issues"
+  },
+  "activationEvents": [
+    "workspaceContains:**/.exercism/metadata.json",
+    "onView:exercismWorkbench.explorer",
+    "onCommand:exercismWorkbench.configure",
+    "onCommand:exercismWorkbench.download",
+    "onCommand:exercismWorkbench.syncWebProgress",
+    "onCommand:exercismWorkbench.syncWebProgressClipboard",
+    "onCommand:exercismWorkbench.importWebProgressClipboard",
+    "onCommand:exercismWorkbench.importWebProgress",
+    "onCommand:exercismWorkbench.refreshTree"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "exercismWorkbench.configure",
+        "title": "Exercism Workbench: Configure"
+      },
+      {
+        "command": "exercismWorkbench.download",
+        "title": "Exercism Workbench: Download Exercise",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "exercismWorkbench.syncWebProgress",
+        "title": "Exercism Workbench: Sync Progress",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "exercismWorkbench.syncWebProgressClipboard",
+        "title": "Exercism Workbench: Sync Progress using Clipboard"
+      },
+      {
+        "command": "exercismWorkbench.importWebProgressClipboard",
+        "title": "Exercism Workbench: Import Progress from Clipboard"
+      },
+      {
+        "command": "exercismWorkbench.importWebProgress",
+        "title": "Exercism Workbench: Import Progress File"
+      },
+      {
+        "command": "exercismWorkbench.downloadExercise",
+        "title": "Exercism Workbench: Download This Exercise",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "exercismWorkbench.test",
+        "title": "Exercism Workbench: Run Tests",
+        "icon": "$(play)"
+      },
+      {
+        "command": "exercismWorkbench.submit",
+        "title": "Exercism Workbench: Submit Solution",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "exercismWorkbench.submitIteration",
+        "title": "Exercism Workbench: Submit New Iteration",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "exercismWorkbench.openInstructions",
+        "title": "Exercism Workbench: View Instructions",
+        "icon": "$(book)"
+      },
+      {
+        "command": "exercismWorkbench.openInBrowser",
+        "title": "Exercism Workbench: Open in Browser",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "exercismWorkbench.refreshTree",
+        "title": "Exercism Workbench: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "exercismWorkbench.toggleLayout",
+        "title": "Exercism Workbench: Toggle Reader Position",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "exercismWorkbench.toggleSort",
+        "title": "Exercism Workbench: Toggle Sort Order",
+        "icon": "$(sort-precedence)"
+      },
+      {
+        "command": "exercismWorkbench.expandAll",
+        "title": "Exercism Workbench: Expand All",
+        "icon": "$(expand-all)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "exercismWorkbench",
+          "title": "Exercism Workbench",
+          "icon": "media/workbench-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "exercismWorkbench": [
+        {
+          "id": "exercismWorkbench.explorer",
+          "name": "Exercises",
+          "icon": "media/workbench-icon.svg"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "exercismWorkbench.explorer",
+        "contents": "Welcome to Exercism Workbench!\n\nSet up your API token to get started:\n\n[Configure Exercism](command:exercismWorkbench.configure)",
+        "when": "!exercismWorkbench.configured"
+      },
+      {
+        "view": "exercismWorkbench.explorer",
+        "contents": "No exercises yet.\n\nBrowse tracks and download an exercise:\n\n[Download Exercise](command:exercismWorkbench.download)",
+        "when": "exercismWorkbench.configured"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "exercismWorkbench.refreshTree",
+          "when": "view == exercismWorkbench.explorer",
+          "group": "navigation"
+        },
+        {
+          "command": "exercismWorkbench.syncWebProgress",
+          "when": "view == exercismWorkbench.explorer",
+          "group": "navigation@1"
+        },
+        {
+          "command": "exercismWorkbench.download",
+          "when": "view == exercismWorkbench.explorer",
+          "group": "navigation"
+        },
+        {
+          "command": "exercismWorkbench.toggleLayout",
+          "when": "view == exercismWorkbench.explorer",
+          "group": "navigation"
+        },
+        {
+          "command": "exercismWorkbench.toggleSort",
+          "when": "view == exercismWorkbench.explorer",
+          "group": "navigation"
+        },
+        {
+          "command": "exercismWorkbench.expandAll",
+          "when": "view == exercismWorkbench.explorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "exercismWorkbench.downloadExercise",
+          "when": "view == exercismWorkbench.explorer && viewItem == exerciseRemote",
+          "group": "inline"
+        },
+        {
+          "command": "exercismWorkbench.test",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseCompleted)",
+          "group": "inline"
+        },
+        {
+          "command": "exercismWorkbench.submit",
+          "when": "view == exercismWorkbench.explorer && viewItem == exercise",
+          "group": "inline"
+        },
+        {
+          "command": "exercismWorkbench.downloadExercise",
+          "when": "view == exercismWorkbench.explorer && viewItem == exerciseRemote",
+          "group": "1_actions@0"
+        },
+        {
+          "command": "exercismWorkbench.test",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseCompleted)",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "exercismWorkbench.submit",
+          "when": "view == exercismWorkbench.explorer && viewItem == exercise",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "exercismWorkbench.submitIteration",
+          "when": "view == exercismWorkbench.explorer && viewItem == exerciseCompleted",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "exercismWorkbench.openInstructions",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseCompleted)",
+          "group": "2_view@1"
+        },
+        {
+          "command": "exercismWorkbench.openInBrowser",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseCompleted)",
+          "group": "2_view@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Exercism Workbench",
+      "properties": {
+        "exercismWorkbench.workspacePath": {
+          "type": "string",
+          "default": "",
+          "description": "Custom Exercism workspace directory path. Leave empty to auto-detect from CLI configuration."
+        },
+        "exercismWorkbench.cliPath": {
+          "type": "string",
+          "default": "exercism",
+          "description": "Path to the Exercism CLI binary."
+        },
+        "exercismWorkbench.cliTimeout": {
+          "type": "number",
+          "default": 60000,
+          "description": "CLI command timeout in milliseconds.",
+          "minimum": 5000
+        },
+        "exercismWorkbench.readerPosition": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "default": "left",
+          "description": "Position of the exercise instruction panel. 'left' = reader on left, editor on right. 'right' = reader on right, editor on left."
+        },
+        "exercismWorkbench.syncMode": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "onFocus"
+          ],
+          "enumDescriptions": [
+            "Only synchronize when you run the Sync Progress command.",
+            "Synchronize when the sidebar opens or VS Code regains focus, subject to the interval below."
+          ],
+          "default": "onFocus",
+          "description": "Controls automatic web-progress synchronization."
+        },
+        "exercismWorkbench.syncIntervalMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 1440,
+          "description": "Minimum time between automatic progress synchronizations, in minutes. Manual sync is never throttled."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap",
+    "watch": "npm run compile -- --watch",
+    "lint": "eslint src --ext ts --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "package": "vsce package",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run compile && npm audit --omit=dev --audit-level=high"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.0",
+    "vitest": "^4.1.2"
+  },
+  "dependencies": {
+    "highlight.js": "^11.9.0",
+    "markdown-it": "^14.0.0"
+  }
+}

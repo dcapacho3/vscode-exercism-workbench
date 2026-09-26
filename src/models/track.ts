@@ -1,0 +1,12 @@
+import { Exercise } from './exercise';
+
+export interface Track {
+  slug: string;           // e.g., "python"
+  name: string;           // Display name, e.g., "Python" (derived from slug)
+  path: string;           // Absolute path to track directory
+  exercises: Exercise[];
+  totalExercises?: number; // Total exercises from API (may be > downloaded count)
+  completedExercises?: number; // Authoritative completed count from imported web progress
+  learnedConcepts?: number;
+  totalConcepts?: number;
+}
