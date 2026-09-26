@@ -1,0 +1,30 @@
+name: Package Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run verify
+
+      # Package VSIX
+      - name: Package VSIX
+        run: npx vsce package -o exercism-workbench.vsix
+
+      # Create GitHub Release with VSIX
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: exercism-workbench.vsix
