@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.2
+
+- Add Submit Anyway to the lint warning shown before a submit, so a warning
+  from an unrelated extension cannot block submitting.
+
 ## 0.6.1
 
 - Render the raw HTML some exercise instructions use, such as tables and line

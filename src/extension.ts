@@ -704,7 +704,7 @@ export function activate(context: vscode.ExtensionContext): void {
 				vscode.window.showWarningMessage('No solution files found to submit.');
 				return;
 			}
-			// Exercism's analyzer flags lint problems, so refuse to submit while the editor reports any.
+			// Exercism's analyzer flags lint problems, so stop and ask while the editor reports any.
 			// shortcut: relies on the linters VS Code already runs; a file no linter has analyzed passes, run our own linter per track if that bites.
 			const lintProblems = solutionFiles.flatMap(file =>
 				vscode.languages.getDiagnostics(vscode.Uri.file(file))
@@ -712,16 +712,17 @@ export function activate(context: vscode.ExtensionContext): void {
 					.map(d => `${path.basename(file)}:${d.range.start.line + 1}: ${d.message}`));
 			if (lintProblems.length > 0) {
 				outputChannel.clear();
-				outputChannel.appendLine(`Submit blocked for ${exercise.slug}. Fix these problems first:\n`);
+				outputChannel.appendLine(`Lint problems in ${exercise.slug}:\n`);
 				outputChannel.appendLine(lintProblems.join('\n'));
-				const action = await vscode.window.showErrorMessage(
-					`Fix ${lintProblems.length} lint problem(s) in ${exercise.slug} before submitting.`,
+				const action = await vscode.window.showWarningMessage(
+					`${exercise.slug} has ${lintProblems.length} lint problem(s). Exercism's analyzer may flag them.`,
 					'Show Problems',
+					'Submit Anyway',
 				);
 				if (action === 'Show Problems') {
 					await vscode.commands.executeCommand('workbench.actions.view.problems');
 				}
-				return;
+				if (action !== 'Submit Anyway') { return; }
 			}
 			let submitResult: SubmitResult | undefined;
 			let cancelled = false;
