@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0
+
+- Order tracks by recent activity: the latest of Exercism's last activity on
+  the track and the last time a solution file was saved. Saving a solution
+  moves its track to the top.
+- Show each track's completed count beside its name, and its last activity in
+  the tooltip.
+- Watch the workspace folder the CLI uses for new downloads. The watcher used
+  to ignore the CLI setting and always watch ~/exercism.
+- Keep tracks expanded or collapsed across refreshes.
+
 ## 0.7.0
 
 - Rebuild the instructions panel. Hints and Help now open as tabs next to the

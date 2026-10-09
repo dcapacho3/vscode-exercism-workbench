@@ -1,33 +1,31 @@
 import * as vscode from 'vscode';
-import { Track, ExerciseStatus } from '../models';
+import { ExerciseStatus, Track } from '../models';
+
+function isFinished(status: ExerciseStatus): boolean {
+  return status === ExerciseStatus.Completed || status === ExerciseStatus.Published;
+}
 
 export class TrackItem extends vscode.TreeItem {
-  constructor(public readonly track: Track, collapsed = false) {
-    // Count exercises that are started/completed/published (i.e., have progress)
-    const doneCount = track.exercises.filter(e =>
-      e.status === ExerciseStatus.Published ||
-      e.status === ExerciseStatus.Completed ||
-      e.status === ExerciseStatus.Iterated ||
-      e.status === ExerciseStatus.Started ||
-      e.status === ExerciseStatus.Downloaded
-    ).length;
-
-    const completedCount = track.completedExercises ?? doneCount;
+  /** `generation` changes when Expand/Collapse All runs, so VS Code applies the new state instead of its remembered one. */
+  constructor(readonly track: Track, collapsed: boolean, generation: number) {
     const total = track.totalExercises ?? track.exercises.length;
-    const label = total > 0
-      ? `${track.name} (${completedCount}/${total})`
-      : `${track.name} (${track.exercises.length})`;
-
+    const done = track.completedExercises ?? track.exercises.filter(e => isFinished(e.status)).length;
     super(
-      label,
-      collapsed
-        ? vscode.TreeItemCollapsibleState.Collapsed
-        : vscode.TreeItemCollapsibleState.Expanded
+      track.name,
+      collapsed ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.Expanded,
     );
+    this.id = `track:${track.slug}:${generation}`;
     this.contextValue = 'track';
+    this.description = total > 0 ? `${done}/${total}` : undefined;
     this.iconPath = new vscode.ThemeIcon('symbol-folder');
-    if (track.totalConcepts !== undefined && track.learnedConcepts !== undefined) {
-      this.tooltip = `${completedCount}/${total} exercises completed · ${track.learnedConcepts}/${track.totalConcepts} concepts learned`;
+
+    const lines = [`${done} of ${total} exercises completed`];
+    if (track.learnedConcepts !== undefined && track.totalConcepts !== undefined) {
+      lines.push(`${track.learnedConcepts} of ${track.totalConcepts} concepts learned`);
     }
+    if (track.lastActivity) {
+      lines.push(`Last active ${new Date(track.lastActivity).toLocaleString()}`);
+    }
+    this.tooltip = lines.join('\n');
   }
 }

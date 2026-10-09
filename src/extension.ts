@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { Workbench } from './workbench';
 import { registerDownloadCommands } from './commands/downloadCommands';
 import { registerProgressCommands } from './commands/progressCommands';
@@ -33,8 +34,16 @@ export function activate(context: vscode.ExtensionContext): void {
   );
   if (treeView.visible) { void workbench.backgroundSync(); }
 
-  const watcher = scanner.createWatcher(() => treeProvider.refresh());
-  if (watcher) { context.subscriptions.push(watcher); }
+  void scanner.createWatcher(() => treeProvider.refresh()).then(watcher => {
+    if (watcher) { context.subscriptions.push(watcher); }
+  });
+  // Saving a solution moves its track to the top of the tree.
+  void scanner.getWorkspacePath().then(root => {
+    if (!root) { return; }
+    context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(doc => {
+      if (doc.uri.fsPath.startsWith(root + path.sep)) { treeProvider.refresh(); }
+    }));
+  });
 
   registerSetupCommands(workbench);
   registerProgressCommands(workbench);

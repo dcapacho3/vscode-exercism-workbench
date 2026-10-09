@@ -2,7 +2,7 @@
   "name": "exercism-workbench",
   "displayName": "Exercism Workbench",
   "description": "A progress-aware Exercism workspace for VS Code: browse learning paths, download exercises, run tests, and submit solutions.",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "publisher": "dcapacho3",
   "license": "MIT",
   "engines": {

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ExercismCli } from './cli/exercismCli';
 import { WorkspaceScanner } from './workspace/workspaceScanner';
-import { ExercismTreeProvider } from './views/exercismTreeProvider';
+import { ExerciseTreeProvider } from './views/exerciseTree';
 import { WebProgressSnapshot, WEB_PROGRESS_STORAGE_KEY } from './progress/webProgress';
 import { BackgroundSyncMode, shouldRunBackgroundSync } from './sync/syncPolicy';
 
@@ -10,7 +10,7 @@ export class Workbench {
   readonly cli = new ExercismCli();
   readonly scanner = new WorkspaceScanner(() => this.cli.getConfig());
   readonly output = vscode.window.createOutputChannel('Exercism Workbench');
-  readonly treeProvider: ExercismTreeProvider;
+  readonly treeProvider: ExerciseTreeProvider;
   private readonly logChannel = vscode.window.createOutputChannel('Exercism Workbench Log');
   private progress: WebProgressSnapshot | undefined;
   private syncInFlight: Promise<WebProgressSnapshot> | undefined;
@@ -19,7 +19,7 @@ export class Workbench {
   constructor(readonly context: vscode.ExtensionContext) {
     context.subscriptions.push(this.output, this.logChannel);
     this.progress = context.globalState.get<WebProgressSnapshot>(WEB_PROGRESS_STORAGE_KEY);
-    this.treeProvider = new ExercismTreeProvider(this.scanner, this.cli, this.progress);
+    this.treeProvider = new ExerciseTreeProvider(this.scanner, this.cli, this.progress);
   }
 
   get webProgress(): WebProgressSnapshot | undefined {

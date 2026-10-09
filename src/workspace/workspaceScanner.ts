@@ -3,151 +3,98 @@ import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
-import { ExerciseStatus } from '../models/exercise';
 import { inspectSolutionFiles } from './solutionFiles';
 
+/** An exercise folder found on disk: <workspace>/<track>/<exercise>/.exercism/metadata.json */
 export interface ScannedExercise {
   slug: string;
-  path: string;       // absolute path to exercise directory
-  track: string;      // parent track slug
-  status: ExerciseStatus;
+  track: string;
+  path: string;
   hasReadme: boolean;
   hasHints: boolean;
   isIncomplete: boolean;
+  /** Newest solution-file change, in ms since the epoch; 0 when there are no solution files. */
+  lastModified: number;
 }
 
 export interface ScannedTrack {
   slug: string;
-  path: string;       // absolute path to track directory
+  path: string;
   exercises: ScannedExercise[];
 }
 
+async function subfolders(dir: string): Promise<string[]> {
+  try {
+    const entries = await fsp.readdir(dir, { withFileTypes: true });
+    return entries.filter(entry => entry.isDirectory()).map(entry => entry.name);
+  } catch {
+    return [];
+  }
+}
+
+async function newestChange(files: string[]): Promise<number> {
+  const times = await Promise.all(files.map(file => fsp.stat(file).then(s => s.mtimeMs, () => 0)));
+  return Math.max(0, ...times);
+}
+
+async function scanExercise(track: string, exercisePath: string): Promise<ScannedExercise | undefined> {
+  if (!fs.existsSync(path.join(exercisePath, '.exercism', 'metadata.json'))) { return undefined; }
+  const inspection = inspectSolutionFiles(exercisePath);
+  return {
+    slug: path.basename(exercisePath),
+    track,
+    path: exercisePath,
+    hasReadme: fs.existsSync(path.join(exercisePath, 'README.md')),
+    hasHints: fs.existsSync(path.join(exercisePath, 'HINTS.md')),
+    isIncomplete: inspection.isIncomplete,
+    lastModified: await newestChange(inspection.files),
+  };
+}
+
+/** Lists every downloaded exercise under an Exercism workspace folder. Tracks with none are left out. */
+export async function scanWorkspace(root: string): Promise<ScannedTrack[]> {
+  const tracks: ScannedTrack[] = [];
+  for (const track of await subfolders(root)) {
+    const trackPath = path.join(root, track);
+    const found = await Promise.all(
+      (await subfolders(trackPath)).map(name => scanExercise(track, path.join(trackPath, name))),
+    );
+    const exercises = found.filter((exercise): exercise is ScannedExercise => !!exercise);
+    if (exercises.length > 0) { tracks.push({ slug: track, path: trackPath, exercises }); }
+  }
+  return tracks;
+}
+
 export class WorkspaceScanner {
-  constructor(private cliConfigGetter: () => Promise<{ workspace: string }>) {}
+  constructor(
+    private readonly cliConfig: () => Promise<{ workspace: string }>,
+    private readonly defaultRoot = path.join(os.homedir(), 'exercism'),
+  ) {}
 
+  /** The workspace folder, from the setting, then the CLI config, then ~/exercism. */
   async getWorkspacePath(): Promise<string | undefined> {
-    // 1. Check VS Code setting
-    const config = vscode.workspace.getConfiguration('exercismWorkbench');
-    const configured = config.get<string>('workspacePath');
-    if (configured && configured.trim() !== '') {
-      const resolved = configured.trim();
-      if (fs.existsSync(resolved)) {
-        return resolved;
-      }
-    }
-
-    // 2. Fall back to CLI config
+    const setting = vscode.workspace.getConfiguration('exercismWorkbench').get<string>('workspacePath', '').trim();
+    let cliWorkspace = '';
     try {
-      const cliConfig = await this.cliConfigGetter();
-      if (cliConfig.workspace && cliConfig.workspace.trim() !== '') {
-        const cliPath = cliConfig.workspace.trim();
-        if (fs.existsSync(cliPath)) {
-          return cliPath;
-        }
-      }
-    } catch {
-      // CLI not available — continue to fallback
-    }
-
-    // 3. Fallback to ~/exercism
-    const fallback = path.join(os.homedir(), 'exercism');
-    if (fs.existsSync(fallback)) {
-      return fallback;
-    }
-
-    return undefined;
+      cliWorkspace = (await this.cliConfig()).workspace.trim();
+    } catch { /* CLI missing or not configured */ }
+    return [setting, cliWorkspace, this.defaultRoot].find(candidate => candidate && fs.existsSync(candidate));
   }
 
   async scan(): Promise<ScannedTrack[]> {
-    const workspacePath = await this.getWorkspacePath();
-    if (!workspacePath) {
-      return [];
-    }
-
-    let trackEntries: fs.Dirent[];
-    try {
-      trackEntries = await fsp.readdir(workspacePath, { withFileTypes: true });
-    } catch {
-      return [];
-    }
-
-    const tracks: ScannedTrack[] = [];
-
-    for (const entry of trackEntries) {
-      if (!entry.isDirectory()) {
-        continue;
-      }
-
-      const trackSlug = entry.name;
-      const trackPath = path.join(workspacePath, trackSlug);
-
-      let exerciseEntries: fs.Dirent[];
-      try {
-        exerciseEntries = await fsp.readdir(trackPath, { withFileTypes: true });
-      } catch {
-        continue;
-      }
-
-      const exercises: ScannedExercise[] = [];
-
-      for (const exEntry of exerciseEntries) {
-        if (!exEntry.isDirectory()) {
-          continue;
-        }
-
-        const exerciseSlug = exEntry.name;
-        const exercisePath = path.join(trackPath, exerciseSlug);
-
-        // Confirm it is an exercism exercise via metadata.json
-        const metadataPath = path.join(exercisePath, '.exercism', 'metadata.json');
-        if (!fs.existsSync(metadataPath)) {
-          continue;
-        }
-
-        const hasReadme = fs.existsSync(path.join(exercisePath, 'README.md'));
-        const hasHints = fs.existsSync(path.join(exercisePath, 'HINTS.md'));
-        const isIncomplete = inspectSolutionFiles(exercisePath).isIncomplete;
-
-        exercises.push({
-          slug: exerciseSlug,
-          path: exercisePath,
-          track: trackSlug,
-          status: ExerciseStatus.Downloaded,
-          hasReadme,
-          hasHints,
-          isIncomplete,
-        });
-      }
-
-      if (exercises.length > 0) {
-        tracks.push({
-          slug: trackSlug,
-          path: trackPath,
-          exercises,
-        });
-      }
-    }
-
-    return tracks;
+    const root = await this.getWorkspacePath();
+    return root ? scanWorkspace(root) : [];
   }
 
-  createWatcher(onChange: () => void): vscode.Disposable | undefined {
-    // getWorkspacePath is async so we resolve it synchronously from settings
-    // or fall back to ~/exercism for the watcher pattern.
-    const config = vscode.workspace.getConfiguration('exercismWorkbench');
-    const configured = config.get<string>('workspacePath');
-    const base =
-      configured && configured.trim() !== ''
-        ? configured.trim()
-        : path.join(os.homedir(), 'exercism');
-
-    // Watch for directory-level changes two levels deep (track/exercise)
-    const pattern = new vscode.RelativePattern(base, '**/.exercism/metadata.json');
-    const watcher = vscode.workspace.createFileSystemWatcher(pattern);
-
+  /** Calls onChange when an exercise is downloaded or deleted anywhere in the workspace. */
+  async createWatcher(onChange: () => void): Promise<vscode.Disposable | undefined> {
+    const root = await this.getWorkspacePath();
+    if (!root) { return undefined; }
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(root, '**/.exercism/metadata.json'),
+    );
     watcher.onDidCreate(onChange);
     watcher.onDidDelete(onChange);
-
     return watcher;
   }
 }

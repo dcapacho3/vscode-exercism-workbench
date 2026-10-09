@@ -1,157 +1,90 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import path from 'path';
-
-// Mock fs and fs/promises before importing the module under test
-vi.mock('fs', async () => {
-  const actual = await vi.importActual<typeof import('fs')>('fs');
-  return {
-    ...actual,
-    existsSync: vi.fn(),
-    Dirent: actual.Dirent,
-  };
-});
-
-vi.mock('fs/promises', async () => {
-  const actual = await vi.importActual<typeof import('fs/promises')>('fs/promises');
-  return {
-    ...actual,
-    readdir: vi.fn(),
-  };
-});
-
+import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
-import * as fsp from 'fs/promises';
-import { WorkspaceScanner } from '../workspace/workspaceScanner';
-import { ExerciseStatus } from '../models/exercise';
+import * as os from 'os';
+import * as path from 'path';
+import { scanWorkspace, WorkspaceScanner } from '../workspace/workspaceScanner';
 
-const mockExistsSync = vi.mocked(fs.existsSync);
-const mockReaddir = vi.mocked(fsp.readdir);
+const created: string[] = [];
 
-function makeDirent(name: string, isDir: boolean): fs.Dirent {
-  return {
-    name,
-    isDirectory: () => isDir,
-    isFile: () => !isDir,
-    isBlockDevice: () => false,
-    isCharacterDevice: () => false,
-    isFIFO: () => false,
-    isSocket: () => false,
-    isSymbolicLink: () => false,
-    path: '',
-    parentPath: '',
-  } as unknown as fs.Dirent;
+function tempDir(): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'workbench-scan-'));
+  created.push(dir);
+  return dir;
 }
 
-describe('WorkspaceScanner', () => {
-  const WORKSPACE = '/home/user/exercism';
-  let scanner: WorkspaceScanner;
+/** Writes an exercise the way the Exercism CLI lays it out. */
+function addExercise(root: string, track: string, slug: string, files: Record<string, string> = {}): string {
+  const dir = path.join(root, track, slug);
+  fs.mkdirSync(path.join(dir, '.exercism'), { recursive: true });
+  fs.writeFileSync(path.join(dir, '.exercism', 'metadata.json'), '{}');
+  const solution = `${slug.replace(/-/g, '_')}.py`;
+  fs.writeFileSync(path.join(dir, '.exercism', 'config.json'), JSON.stringify({ files: { solution: [solution] } }));
+  fs.writeFileSync(path.join(dir, solution), 'pass\n');
+  for (const [name, content] of Object.entries(files)) { fs.writeFileSync(path.join(dir, name), content); }
+  return dir;
+}
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    scanner = new WorkspaceScanner(async () => ({ workspace: WORKSPACE }));
+afterEach(() => {
+  for (const dir of created.splice(0)) { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+describe('scanWorkspace', () => {
+  it('finds exercises grouped by track and records which documents exist', async () => {
+    const root = tempDir();
+    addExercise(root, 'python', 'bob', { 'README.md': '# Bob' });
+    addExercise(root, 'rust', 'leap', { 'HINTS.md': 'hint' });
+
+    const tracks = await scanWorkspace(root);
+    const python = tracks.find(t => t.slug === 'python')!;
+    const rust = tracks.find(t => t.slug === 'rust')!;
+    expect(python.exercises).toMatchObject([{ slug: 'bob', track: 'python', hasReadme: true, hasHints: false, isIncomplete: false }]);
+    expect(rust.exercises).toMatchObject([{ slug: 'leap', hasReadme: false, hasHints: true }]);
   });
 
-  describe('getWorkspacePath()', () => {
-    it('returns undefined when no path can be resolved', async () => {
-      // VS Code config returns undefined (default), CLI getter throws, ~/exercism does not exist
-      mockExistsSync.mockReturnValue(false);
-      const noCliScanner = new WorkspaceScanner(async () => { throw new Error('no cli'); });
-      const result = await noCliScanner.getWorkspacePath();
-      expect(result).toBeUndefined();
-    });
+  it('ignores folders that are not exercises and tracks with none', async () => {
+    const root = tempDir();
+    fs.mkdirSync(path.join(root, 'notes', 'ideas'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'stray-file.txt'), '');
+    addExercise(root, 'python', 'bob');
+    fs.mkdirSync(path.join(root, 'python', 'scratch'));
 
-    it('falls back to CLI config workspace when VS Code setting is empty', async () => {
-      // existsSync returns true for the CLI workspace path
-      mockExistsSync.mockImplementation((p: fs.PathLike) => p === WORKSPACE);
-      const result = await scanner.getWorkspacePath();
-      expect(result).toBe(WORKSPACE);
-    });
-
-    it('falls back to ~/exercism when CLI config throws', async () => {
-      const homeExercism = path.join(require('os').homedir(), 'exercism');
-      mockExistsSync.mockImplementation((p: fs.PathLike) => p === homeExercism);
-      const noCliScanner = new WorkspaceScanner(async () => { throw new Error('no cli'); });
-      const result = await noCliScanner.getWorkspacePath();
-      expect(result).toBe(homeExercism);
-    });
+    const tracks = await scanWorkspace(root);
+    expect(tracks.map(t => t.slug)).toEqual(['python']);
+    expect(tracks[0].exercises.map(e => e.slug)).toEqual(['bob']);
   });
 
-  describe('scan()', () => {
-    it('returns empty array when workspace path cannot be resolved', async () => {
-      mockExistsSync.mockReturnValue(false);
-      const noCliScanner = new WorkspaceScanner(async () => { throw new Error('no cli'); });
-      const tracks = await noCliScanner.scan();
-      expect(tracks).toEqual([]);
-    });
+  it('records when the solution was last edited', async () => {
+    const root = tempDir();
+    const dir = addExercise(root, 'python', 'bob');
+    const edited = new Date('2026-10-01T12:00:00Z');
+    fs.utimesSync(path.join(dir, 'bob.py'), edited, edited);
 
-    it('identifies tracks and exercises correctly', async () => {
-      // Workspace path resolves via CLI config
-      mockExistsSync.mockImplementation((p: fs.PathLike) => {
-        const s = String(p);
-        if (s === WORKSPACE) return true;
-        if (s === `${WORKSPACE}/python/hello-world/.exercism/metadata.json`) return true;
-        if (s === `${WORKSPACE}/python/hello-world/README.md`) return true;
-        if (s === `${WORKSPACE}/python/hello-world/HINTS.md`) return false;
-        return false;
-      });
+    const [track] = await scanWorkspace(root);
+    expect(track.exercises[0].lastModified).toBe(edited.getTime());
+  });
 
-      mockReaddir
-        .mockResolvedValueOnce([makeDirent('python', true)] as any)          // tracks
-        .mockResolvedValueOnce([makeDirent('hello-world', true)] as any);    // exercises
+  it('returns nothing for a missing folder', async () => {
+    expect(await scanWorkspace(path.join(tempDir(), 'missing'))).toEqual([]);
+  });
+});
 
-      const tracks = await scanner.scan();
-      expect(tracks).toHaveLength(1);
-      expect(tracks[0].slug).toBe('python');
-      expect(tracks[0].exercises).toHaveLength(1);
-      const ex = tracks[0].exercises[0];
-      expect(ex.slug).toBe('hello-world');
-      expect(ex.track).toBe('python');
-      expect(ex.status).toBe(ExerciseStatus.Downloaded);
-      expect(ex.hasReadme).toBe(true);
-      expect(ex.hasHints).toBe(false);
-    });
+describe('WorkspaceScanner.getWorkspacePath', () => {
+  it('uses the CLI workspace when it exists', async () => {
+    const cliRoot = tempDir();
+    const scanner = new WorkspaceScanner(async () => ({ workspace: cliRoot }), tempDir());
+    expect(await scanner.getWorkspacePath()).toBe(cliRoot);
+  });
 
-    it('skips directories without .exercism/metadata.json', async () => {
-      mockExistsSync.mockImplementation((p: fs.PathLike) => {
-        const s = String(p);
-        return s === WORKSPACE;
-        // metadata.json never exists
-      });
+  it('falls back to the default folder when the CLI fails or points nowhere', async () => {
+    const fallback = tempDir();
+    const failing = new WorkspaceScanner(async () => { throw new Error('no cli'); }, fallback);
+    const missing = new WorkspaceScanner(async () => ({ workspace: '/no/such/folder' }), fallback);
+    expect(await failing.getWorkspacePath()).toBe(fallback);
+    expect(await missing.getWorkspacePath()).toBe(fallback);
+  });
 
-      mockReaddir
-        .mockResolvedValueOnce([makeDirent('python', true)] as any)
-        .mockResolvedValueOnce([makeDirent('not-an-exercise', true)] as any);
-
-      const tracks = await scanner.scan();
-      // Empty tracks are filtered out
-      expect(tracks).toHaveLength(0);
-    });
-
-    it('skips non-directory entries at track level', async () => {
-      mockExistsSync.mockImplementation((p: fs.PathLike) => {
-        const s = String(p);
-        if (s === WORKSPACE) return true;
-        if (s === `${WORKSPACE}/python/hello-world/.exercism/metadata.json`) return true;
-        if (s === `${WORKSPACE}/python/hello-world/README.md`) return true;
-        return false;
-      });
-
-      mockReaddir.mockResolvedValueOnce([
-        makeDirent('some-file.txt', false),
-        makeDirent('python', true),
-      ] as any).mockResolvedValueOnce([makeDirent('hello-world', true)] as any);
-
-      const tracks = await scanner.scan();
-      expect(tracks).toHaveLength(1);
-      expect(tracks[0].slug).toBe('python');
-    });
-
-    it('returns empty array when readdir throws', async () => {
-      mockExistsSync.mockImplementation((p: fs.PathLike) => String(p) === WORKSPACE);
-      mockReaddir.mockRejectedValueOnce(new Error('EACCES'));
-
-      const tracks = await scanner.scan();
-      expect(tracks).toEqual([]);
-    });
+  it('returns undefined when no candidate exists', async () => {
+    const scanner = new WorkspaceScanner(async () => ({ workspace: '' }), '/no/such/folder');
+    expect(await scanner.getWorkspacePath()).toBeUndefined();
   });
 });

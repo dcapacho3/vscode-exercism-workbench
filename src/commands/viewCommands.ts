@@ -4,14 +4,9 @@ import { ExerciseItem } from '../views/exerciseItem';
 import { InstructionsPanel } from '../webview/instructionsPanel';
 import { readExerciseMetadata, resolveExercise } from '../exercises/exerciseLocator';
 import { openExerciseWorkspace } from '../exercises/exerciseWorkspace';
+import { EXERCISE_ORDER_LABELS } from '../views/treeOrder';
 import { Workbench } from '../workbench';
 
-const SORT_LABELS: Record<string, string> = {
-  'default': 'Learning Path (official order)',
-  'reverse': 'Learning Path (reversed)',
-  'easy-first': 'Easy → Hard',
-  'hard-first': 'Hard → Easy',
-};
 
 export function registerViewCommands(workbench: Workbench): void {
   const { cli, treeProvider } = workbench;
@@ -42,8 +37,8 @@ export function registerViewCommands(workbench: Workbench): void {
   });
 
   workbench.register('exercismWorkbench.toggleSort', () => {
-    treeProvider.toggleSort();
-    vscode.window.showInformationMessage(`Sort: ${SORT_LABELS[treeProvider.sortOrder]}`);
+    treeProvider.cycleExerciseOrder();
+    vscode.window.showInformationMessage(`Exercise order: ${EXERCISE_ORDER_LABELS[treeProvider.exerciseOrder]}`);
   });
 
   workbench.register('exercismWorkbench.expandAll', () => treeProvider.toggleCollapse());
