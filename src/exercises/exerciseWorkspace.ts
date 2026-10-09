@@ -4,7 +4,7 @@ import { Exercise } from '../models';
 import { InstructionsPanel } from '../webview/instructionsPanel';
 import { inspectSolutionFiles } from '../workspace/solutionFiles';
 import { errorMessage, Workbench } from '../workbench';
-import { buildExerciseFromPath } from './exerciseLocator';
+import { buildExerciseFromPath, withSyncedStatus } from './exerciseLocator';
 
 /**
  * Runs `exercism download` behind a cancellable notification.
@@ -95,8 +95,9 @@ export async function ensureCompleteDownload(workbench: Workbench, exercise: Exe
 
 /** Opens the solution file and the instructions panel side by side. */
 export async function openExerciseWorkspace(workbench: Workbench, exercise: Exercise): Promise<void> {
-  const currentExercise = await ensureCompleteDownload(workbench, exercise);
-  if (!currentExercise) { return; }
+  const repaired = await ensureCompleteDownload(workbench, exercise);
+  if (!repaired) { return; }
+  const currentExercise = withSyncedStatus(repaired, workbench.webProgress);
 
   const readerPosition = vscode.workspace.getConfiguration('exercismWorkbench').get<string>('readerPosition', 'left');
   const editorColumn = readerPosition === 'left' ? vscode.ViewColumn.Two : vscode.ViewColumn.One;

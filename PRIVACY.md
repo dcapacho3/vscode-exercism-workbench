@@ -1,20 +1,22 @@
 # Privacy
 
-Exercism Workbench does not include analytics, advertising, or independent
-telemetry.
+Exercism Workbench has no analytics, advertising or telemetry of its own.
 
-To provide its features, the extension:
+To do its job, the extension:
 
-- runs the locally installed Exercism CLI for configuration, downloads, tests,
-  and submissions;
-- reads the Exercism API token stored in the CLI configuration;
-- sends authenticated progress requests only to `https://api.exercism.org`;
-- opens `https://exercism.org` in your browser when requested; and
-- stores a progress snapshot in VS Code's extension storage.
+- runs the Exercism CLI installed on your machine to configure it, download
+  exercises, run tests and submit solutions;
+- reads the API token saved in the CLI's configuration;
+- sends that token only to `https://api.exercism.org`, to read your tracks,
+  exercises and solutions and, when you confirm Mark as Complete, to mark a
+  solution complete;
+- reads track exercise lists from `https://raw.githubusercontent.com/exercism/`
+  without a token, but only when the Exercism API cannot be reached;
+- opens `https://exercism.org` in your browser when you ask; and
+- stores a copy of your progress in VS Code's extension storage.
 
-The API token is not written to logs, included in exported progress files, or
-sent to the extension author. Clipboard and file import commands only process
-data you explicitly provide.
+The token never appears in logs or exported progress, and it is never sent to
+the extension's author. The clipboard and file import commands only read data
+you give them.
 
-For Exercism's own handling of account data, consult Exercism's privacy policy.
-
+For how Exercism handles your account data, see Exercism's own privacy policy.

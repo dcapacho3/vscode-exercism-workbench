@@ -6,3 +6,7 @@ export const workspace = {
 export class RelativePattern {
   constructor(readonly base: string, readonly pattern: string) {}
 }
+
+export class TreeItem {
+  constructor(readonly label: string, readonly collapsibleState?: number) {}
+}

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.1
+
+- Show the synced status in the instructions panel when an exercise is opened
+  from the editor or the command palette. It showed "In progress" for
+  exercises already completed.
+- Rewrite the README for the current feature set, with new screenshots.
+
 ## 0.9.0
 
 - Split the Exercism CLI wrapper in two: ExercismCli runs the CLI, and the new

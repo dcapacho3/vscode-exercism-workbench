@@ -1,178 +1,143 @@
+<p align="center">
+  <img src="media/workbench-icon.png" alt="Exercism Workbench logo: a check mark between curly braces" width="96">
+</p>
+
 <h1 align="center">Exercism Workbench</h1>
 
 <p align="center">
-  <em>A progress-aware Exercism workspace for VS Code.</em>
+  Work through <a href="https://exercism.org">Exercism</a> exercises without leaving VS Code:<br>
+  read the instructions, run the tests, submit, and track your progress in one place.
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
-  <img src="https://img.shields.io/badge/VS%20Code-%3E%3D1.85.0-blue?logo=visualstudiocode" alt="VS Code">
-  <img src="https://img.shields.io/badge/Exercism%20CLI-%3E%3D3.3.0-purple" alt="Exercism CLI">
-  <img src="https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/VS%20Code-%3E%3D1.85-blue?logo=visualstudiocode" alt="VS Code 1.85 or newer">
+  <img src="https://img.shields.io/badge/Exercism%20CLI-%3E%3D3.3-purple" alt="Exercism CLI 3.3 or newer">
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> &middot;
-  <a href="#quick-start">Quick Start</a> &middot;
-  <a href="#commands">Commands</a> &middot;
-  <a href="#settings">Settings</a> &middot;
-  <a href="https://exercism.org">Exercism</a>
+  <img src="media/screenshot.png" alt="The Exercism sidebar, the Card Games instructions with Hints and Help tabs, and the solution file side by side">
 </p>
 
----
+## What it does
 
-## Features
-
-- **Real Progress Sync** — Uses the API token already configured in the CLI to show joined tracks, completed work, unlocks, and the recommended next exercise
-- **Sidebar Tree View** — Browse all tracks and exercises with status icons in the Activity Bar
-- **Exercise Instructions** — Preview READMEs with syntax-highlighted code in a Webview panel
-- **CLI Test Launcher** — Run `exercism test` from the sidebar and keep its output in VS Code
-- **Test Diagnostics** — Detect incomplete downloads and common environment/setup failures, with links to exercise or track help
-- **Solution Submission** — Submit solutions and auto-refresh progress
-- **Download Exercises** — Browse the full exercise catalog, download with one click
-- **Layout Toggle** — Swap reader/editor position (left/right) to match your preference
-- **Sort Exercises** — Sort by learning path, reversed, easy-to-hard, or hard-to-easy
-- **Editor-friendly Instructions** — Copy the Markdown or open `README.md` as a normal editor tab
-- **Theme-aware UI** — Webview adapts to light, dark, and high-contrast themes
+**Your tracks, in the order you use them.** The sidebar lists every track you have joined or downloaded. The one you worked on last sits at the top, based on your latest activity on Exercism and the last time you saved a solution. Each track shows how many exercises you have completed, and its tooltip shows concepts learned and when you were last active.
 
 <p align="center">
-  <img src="media/screenshot.png" alt="Exercism Workbench screenshot" width="900">
+  <img src="media/tracks.png" alt="Tracks ordered by recent activity, with completed counts and a tooltip showing the last activity" width="640">
 </p>
 
-### Exercise statuses
+**Exercises with their real status.** Inside a track, exercises follow Exercism's learning path and show whether they are recommended, locked, available, in progress, submitted or completed. Click one to open it, or download it first if it is not on disk yet.
 
-| Status | Sidebar appearance | Meaning |
-|--------|--------------------|---------|
-| Recommended | Yellow star | Next exercise in your learning path |
-| Completed | Green pass mark | Completed or published on Exercism |
-| In progress | Blue edit mark | Started online or downloaded locally |
-| Available | Open circle | Unlocked and ready to start |
-| Locked | Lock | Complete prerequisites first |
+**Instructions beside the code.** The instructions open in a panel next to your solution, with Hints and Help in their own tabs. Code samples follow your color theme, and the tables and diagrams some exercises use render as they do on the website.
 
-## Quick Start
+**Test, submit, complete.** The buttons under the instructions run the tests, submit, and mark the exercise as complete, so the whole loop happens in VS Code:
 
-1. **Install the [Exercism CLI](https://exercism.org/docs/using/solving-exercises/working-locally)** (v3.3.0+)
-2. **Configure your API token:**
-   ```bash
-   exercism configure --token=<your-token>
-   ```
-   Get your token at [exercism.org/settings/api_cli](https://exercism.org/settings/api_cli)
-3. **Open the Exercism sidebar** — click the Exercism icon in the Activity Bar
-4. **Click Configure** if prompted, or exercises will load automatically
-5. **Click any exercise** — code opens on one side, instructions on the other
+<p align="center">
+  <img src="media/workflow.png" alt="Clicking Card Games in the sidebar opens its instructions beside the code; Run tests then shows 7 passing tests and the message: All tests pass for card-games">
+</p>
 
-### Sync your real web progress
+- **Run tests** runs `exercism test` and keeps the output in VS Code. When tests cannot run because of the setup rather than your code, for example a missing compiler or an outdated toolchain, it says so and links to the track's setup guide. C++ exercises are configured and built with CMake when needed.
+- **Submit** sends a new iteration through the CLI. If VS Code reports errors or warnings in your solution, Workbench lists them first and asks before submitting, since Exercism's analyzer will flag them too. When a submit fails, the message gives the reason, such as "nothing changed since your last iteration."
+- **Mark as complete** finishes the exercise on Exercism after you confirm. The CLI has no command for this; Workbench calls the same endpoint as the website's button.
 
-Run **Exercism Workbench: Sync Progress** from the Command Palette or click the sync icon in the Exercism sidebar. The extension uses your existing CLI API token with Exercism's dedicated API host to retrieve joined tracks, unlocks, recommendations, and solutions automatically.
+**Progress that keeps itself up to date.** Workbench reads your progress from Exercism with the token the CLI already has, and refreshes it when you return to VS Code, after you submit, or when you ask.
 
-Progress also refreshes silently when the Exercism sidebar becomes visible or VS Code regains focus, such as after completing an exercise in the browser.
+**Downloads that repair themselves.** If an exercise folder is missing files listed in its `.exercism/config.json`, such as a deleted test file, Workbench offers to download them again. Your solution code is kept.
 
-Submitting sends a new iteration through the official CLI. Exercism decides when an exercise is complete; after you complete it on the website, returning to VS Code triggers a fresh progress sync.
+## Getting started
 
-No browser, browser add-on, userscript, cookie export, or downloaded file is required. The older clipboard and file import commands remain available as fallbacks.
+1. Install the [Exercism CLI](https://exercism.org/docs/using/solving-exercises/working-locally) and the tools for the tracks you study, for example Python with pytest.
+2. Install Exercism Workbench and open the Exercism view in the Activity Bar.
+3. Click **Configure Exercism** and paste the token from [exercism.org/settings/api_cli](https://exercism.org/settings/api_cli). If the CLI is already configured, Workbench uses that token and skips this step.
+4. Click an exercise to open it, or use **Download Exercise** in the view's title bar to pick a new one.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `Exercism Workbench: Configure` | Set up the CLI token with a guided flow |
-| `Exercism Workbench: Download Exercise` | Browse and download from the exercise catalog |
-| `Exercism Workbench: Sync Progress` | Retrieve joined tracks, recommendations, unlocks, and solution progress |
-| `Exercism Workbench: Sync Progress using Clipboard` | Browser-copy fallback when automatic API synchronization is unavailable |
-| `Exercism Workbench: Import Progress from Clipboard` | Import a copied tracks, exercises, solutions, or combined response |
-| `Exercism Workbench: Import Progress File` | Import a combined progress JSON file |
-| `Exercism Workbench: Run Tests` | Run the current exercise's tests |
-| `Exercism Workbench: Submit Solution` | Submit a solution or new iteration |
-| `Exercism Workbench: Toggle Reader Position` | Swap reader/editor layout |
-| `Exercism Workbench: Toggle Sort Order` | Cycle path, reversed, easy, and hard ordering |
-| `Exercism Workbench: Open in Browser` | Open the exercise on exercism.org |
-| `Exercism Workbench: Refresh` | Refresh the local workspace and visible progress |
+All commands are in the Command Palette under **Exercism Workbench**. Most also appear in the sidebar and the instructions panel.
+
+| Command | What it does |
+|---------|--------------|
+| Configure | Save your Exercism API token in the CLI. |
+| Download Exercise | Pick a track and an exercise, then download it. |
+| View Instructions | Open the current exercise's instructions next to its code. |
+| Run Tests | Run the current exercise's tests. |
+| Submit Solution / Submit New Iteration | Submit the solution files listed in `.exercism/config.json`. |
+| Mark as Complete | Mark a submitted exercise as complete on Exercism. |
+| Open in Browser | Open the exercise on exercism.org. |
+| Sync Progress | Fetch your tracks, unlocks and solution statuses now. |
+| Sync Progress using Clipboard | Fallback if Exercism blocks API requests: copy each JSON page from the browser. |
+| Import Progress from Clipboard / File | Load progress JSON you saved yourself. |
+| Toggle Reader Position | Swap the instructions and code columns. |
+| Toggle Sort Order | Order exercises by learning path, reversed, easy to hard, or hard to easy. |
+| Expand All | Expand or collapse every track. |
+| Refresh | Reload the sidebar. |
 
 ## Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `exercismWorkbench.workspacePath` | `""` | Custom workspace path. Empty means auto-detect from the CLI. |
-| `exercismWorkbench.cliPath` | `"exercism"` | Exercism CLI command or absolute path. |
-| `exercismWorkbench.cliTimeout` | `60000` | CLI timeout in milliseconds. |
-| `exercismWorkbench.readerPosition` | `"left"` | Put the instruction reader on the left or right. |
-| `exercismWorkbench.syncMode` | `"onFocus"` | Sync automatically on focus/sidebar visibility, or only manually. |
-| `exercismWorkbench.syncIntervalMinutes` | `5` | Minimum delay between automatic syncs. Manual sync is never throttled. |
+| `exercismWorkbench.workspacePath` | `""` | Exercism folder to use. Empty means the CLI's workspace, then `~/exercism`. |
+| `exercismWorkbench.cliPath` | `"exercism"` | CLI command, or its full path if it is not on VS Code's `PATH`. |
+| `exercismWorkbench.cliTimeout` | `60000` | Time limit for CLI commands and web requests, in milliseconds. |
+| `exercismWorkbench.readerPosition` | `"left"` | Which side the instructions open on. |
+| `exercismWorkbench.syncMode` | `"onFocus"` | Sync when VS Code or the sidebar regains focus, or only when you ask. |
+| `exercismWorkbench.syncIntervalMinutes` | `5` | Shortest time between automatic syncs. Manual sync ignores it. |
 
 ## Troubleshooting
 
-- If an exercise folder exists but its download is incomplete, open it from the sidebar and choose **Repair Download**. The extension detects both missing solution files and metadata-only folders where `.exercism/config.json` was never downloaded.
-- If the CLI is outside VS Code's `PATH`, set `exercismWorkbench.cliPath` to its absolute path.
-- If web progress looks stale, run **Exercism Workbench: Sync Progress**. Manual synchronization is never throttled.
-- Select **Exercism Workbench** in VS Code's Output panel when diagnosing tests or submissions.
+- **"Exercism is limiting requests right now."** Exercism allows a limited number of API requests per minute. Wait a minute and try again.
+- **Tests fail before running your code.** Check the **Exercism Workbench** output channel. For Python, pytest must be installed in the environment VS Code uses. Plugins from other software on the same `PYTHONPATH`, such as ROS, can break pytest before it starts.
+- **The CLI is not found.** Set `exercismWorkbench.cliPath` to the full path of the `exercism` program.
+- **The sidebar looks out of date.** Run **Sync Progress**, which is never throttled.
 
-The official CLI remains the primary test runner. When it cannot start, Workbench attempts to distinguish setup/toolchain problems from normal compiler or assertion failures. Recovery is based on detected project capabilities such as `CMakeLists.txt`, rather than a fixed list of language tracks. System compilers and runtimes are never installed or upgraded without your involvement.
+## Track support
 
-## Architecture
+| Track | Status |
+|-------|--------|
+| Python | Download, instructions, tests, submit, complete and sync tested end to end. |
+| C++ | Expected to work; needs CMake and a C++ compiler. Not yet tested end to end. |
+| Rust | Expected to work; some exercises need a recent Rust toolchain. Not yet tested end to end. |
+| Other tracks | Expected to work, since everything goes through the official CLI, but not tested track by track. |
 
-```
-src/
-├── cli/exercismCli.ts        # CLI wrapper + Exercism API client with caching
-├── workspace/workspaceScanner.ts  # Local filesystem scanner
-├── models/                   # Track, Exercise, ExerciseStatus
-├── views/                    # TreeView provider + items
-├── webview/                  # Markdown preview panel
-└── extension.ts              # Entry point, command registration
-```
+Workbench never installs or updates language toolchains. It only reports what is missing.
+
+## Privacy
+
+Workbench has no analytics or telemetry. It sends your Exercism token only to `api.exercism.org`, and only for your own progress and solutions. See [PRIVACY.md](PRIVACY.md).
 
 ## Development
 
+Requires Node.js 22 or newer and the Exercism CLI.
+
 ```bash
-# Install the exact dependency set
-npm ci
-
-# Compile
-npm run compile
-
-# Watch mode
-npm run watch
-
-# Run lint, types, tests, build, and the production audit
-npm run verify
-
-# Launch in VS Code (F5)
-# Uses .vscode/launch.json
+npm ci            # install dependencies
+npm run watch     # rebuild on change; press F5 in VS Code to try it
+npm run verify    # lint, type check, tests, build and dependency audit
+npx vsce package  # build a .vsix
 ```
 
-## Contributing
+```
+src/
+├── extension.ts      Activation: creates the services and registers commands
+├── workbench.ts      Shared services, progress storage and background sync
+├── commands/         One file per group of commands
+├── exercises/        Finding, opening and repairing exercises
+├── cli/              Running the Exercism CLI and reading its output
+├── api/              Exercism's web API
+├── progress/         Parsing and storing progress
+├── views/            Sidebar tree, ordering and items
+├── webview/          Instructions panel and Markdown rendering
+└── workspace/        Scanning the Exercism folder on disk
+webview-ui/           Panel stylesheet and script
+```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports and focused pull requests are welcome.
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
-## Privacy and network access
+## Origin
 
-The extension reads the token saved by the official Exercism CLI and sends it only to `api.exercism.org`. It does not collect analytics or send the token to the extension author. See [PRIVACY.md](PRIVACY.md) for details.
-
-## Track verification
-
-- [x] **Python** — browsing, download, reader/editor layout, tests, submission,
-  and progress synchronization verified end to end
-- [ ] **C++** — experimental; local testing depends on the platform's compiler,
-  CMake generator, and build environment
-- [ ] **Rust** — experimental; current exercises may require a newer Rust
-  toolchain than the operating system provides
-- [ ] **Other tracks** — common Exercism operations are expected to work, but
-  complete language-specific testing has not yet been verified
-
-Workbench reports detected setup problems and may initialize a recognized build
-system such as CMake. It does not install or manage language toolchains.
-
-## Acknowledgments
-
-Exercism Workbench was originally derived from the MIT-licensed [vscode-exercism-helper](https://github.com/skyswordw/vscode-exercism-helper) project by skyswordw. This project substantially expands its progress synchronization, status handling, notification lifecycle, testing, security, interface, and documentation while preserving the original copyright notice.
-
-Exercism is a separate project and this community extension is not an official Exercism product. See [NOTICE.md](NOTICE.md) for attribution details.
+Exercism Workbench started from [vscode-exercism-helper](https://github.com/skyswordw/vscode-exercism-helper) by skyswordw. That project supplied the original idea of a sidebar and instructions panel for Exercism, but it did not work in practice. Workbench rebuilt it from that starting point with new code, adding progress sync, submission and completion, test diagnostics, download repair and the current interface.
 
 ## License
 
-[MIT](LICENSE)
-
----
-
-<p align="center">
-  Built for the <a href="https://exercism.org">Exercism</a> community
-</p>
+[MIT](LICENSE). Exercism Workbench is a community project and is not affiliated with or endorsed by Exercism. See [NOTICE.md](NOTICE.md).

@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Exercise, ExerciseStatus, slugToName } from '../models';
+import { resolveExerciseStatus } from '../progress/exerciseStatus';
+import { WebProgressSnapshot } from '../progress/webProgress';
 import { ExerciseItem } from '../views/exerciseItem';
 import { inspectSolutionFiles } from '../workspace/solutionFiles';
 
@@ -17,6 +19,16 @@ export function buildExerciseFromPath(exercisePath: string, track: string, slug:
     isDownloaded: true,
     isIncomplete: inspectSolutionFiles(exercisePath).isIncomplete,
   };
+}
+
+/**
+ * An exercise built from its folder alone has no status yet. Fill it in from the
+ * synced progress, so opening from the editor shows the same status as the tree.
+ */
+export function withSyncedStatus(exercise: Exercise, progress: WebProgressSnapshot | undefined): Exercise {
+  if (exercise.status !== ExerciseStatus.Downloaded) { return exercise; }
+  const solution = progress?.solutions.find(s => s.track.slug === exercise.track && s.exercise.slug === exercise.slug);
+  return solution ? { ...exercise, status: resolveExerciseStatus(solution.status, true, true) } : exercise;
 }
 
 /** Finds the exercise that contains the file in the active editor. */
