@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.3
+
+- Show why a submit failed. The CLI prints API errors to stderr, which was
+  dropped, so the message read "Submit failed:" with nothing after it.
+- Explain the two common submit failures: no changes since the last
+  iteration, and Exercism's rate limit.
+- Explain HTTP 429 from Exercism as a rate limit wherever it appears.
+- Reword messages to be shorter and plainer.
+- Split the command code out of extension.ts into one module per area.
+
 ## 0.6.2
 
 - Add Submit Anyway to the lint warning shown before a submit, so a warning

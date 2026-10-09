@@ -120,9 +120,9 @@ export class ExercisePreviewPanel {
           try {
             const content = fs.readFileSync(readmePath, 'utf8');
             vscode.env.clipboard.writeText(content);
-            vscode.window.showInformationMessage('Instructions copied to clipboard');
+            vscode.window.showInformationMessage('Copied the instructions.');
           } catch {
-            vscode.window.showWarningMessage('Could not read README.md');
+            vscode.window.showWarningMessage('Could not read README.md.');
           }
           break;
         }

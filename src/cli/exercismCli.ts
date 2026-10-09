@@ -4,6 +4,7 @@ import { WebProgressSnapshot } from '../progress/webProgress';
 import { fetchProgressSnapshot } from '../progress/progressApi';
 import { parseDownloadPath } from './parseDownloadOutput';
 import { combineProcessOutput, diagnoseTestFailure, TestDiagnostic } from './testDiagnostics';
+import { RATE_LIMIT_MESSAGE } from './submitDiagnostics';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -122,6 +123,10 @@ export class ExercismCli {
         });
         res.on('end', () => {
           const status = res.statusCode ?? 0;
+          if (status === 429) {
+            reject(new Error(RATE_LIMIT_MESSAGE));
+            return;
+          }
           if (status < 200 || status >= 300) {
             reject(new Error(`HTTP ${status} from ${url}`));
             return;
@@ -412,9 +417,9 @@ export class ExercismCli {
         output: stdout,
       };
     } catch (err: unknown) {
-      const error = err as NodeJS.ErrnoException & { stdout?: string };
-      const output = error.stdout ?? error.message ?? '';
-      return { success: false, output };
+      // The CLI prints API errors to stderr.
+      const error = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string };
+      return { success: false, output: combineProcessOutput(error.stdout, error.stderr, error.message) };
     }
   }
 }
