@@ -37,11 +37,13 @@ export function activate(context: vscode.ExtensionContext): void {
   void scanner.createWatcher(() => treeProvider.refresh()).then(watcher => {
     if (watcher) { context.subscriptions.push(watcher); }
   });
-  // Saving a solution moves its track to the top of the tree.
+  // Saving a solution moves its track to the top of the tree. Saves in the top track change nothing, so skip those.
   void scanner.getWorkspacePath().then(root => {
     if (!root) { return; }
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(doc => {
-      if (doc.uri.fsPath.startsWith(root + path.sep)) { treeProvider.refresh(); }
+      const relative = path.relative(root, doc.uri.fsPath);
+      if (relative.startsWith('..') || path.isAbsolute(relative)) { return; }
+      if (relative.split(path.sep)[0] !== treeProvider.topTrack) { treeProvider.refresh(); }
     }));
   });
 
@@ -57,9 +59,8 @@ export function activate(context: vscode.ExtensionContext): void {
   workbench.log(`Extension URI: ${context.extensionUri.fsPath}`);
 }
 
-export function deactivate(): void {
-  // Cleanup handled by disposables
-}
+// Everything is registered in context.subscriptions, which VS Code disposes on its own.
+export function deactivate(): void {}
 
 function logStartupDiagnostics(workbench: Workbench): void {
   const { cli, scanner } = workbench;

@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ExercismCli } from '../cli/exercismCli';
+import { ExercismApi } from '../api/exercismApi';
 import { slugToName, Track } from '../models';
 import { WebProgressSnapshot } from '../progress/webProgress';
+import { CatalogExercise } from '../api/exercismApi';
 import { ScannedTrack, WorkspaceScanner } from '../workspace/workspaceScanner';
 import { ExerciseItem } from './exerciseItem';
 import { TrackItem } from './trackItem';
-import { buildTrackExercises, CatalogExercise } from './trackExercises';
+import { buildTrackExercises } from './trackExercises';
 import { EXERCISE_ORDERS, ExerciseOrder, orderExercises, orderTracks } from './treeOrder';
 
 type Node = TrackItem | ExerciseItem;
@@ -18,16 +19,21 @@ export class ExerciseTreeProvider implements vscode.TreeDataProvider<Node> {
   readonly onDidChangeTreeData = this.changed.event;
 
   private local = new Map<string, ScannedTrack>();
-  private token = '';
   private order: ExerciseOrder = 'path';
   private collapsed = false;
   private generation = 0;
+  private firstTrack: string | undefined;
 
   constructor(
     private readonly scanner: WorkspaceScanner,
-    private readonly cli: ExercismCli,
+    private readonly api: ExercismApi,
     private progress: WebProgressSnapshot | undefined,
   ) {}
+
+  /** The track shown at the top, i.e. the most recently active one. */
+  get topTrack(): string | undefined {
+    return this.firstTrack;
+  }
 
   get exerciseOrder(): ExerciseOrder {
     return this.order;
@@ -60,6 +66,7 @@ export class ExerciseTreeProvider implements vscode.TreeDataProvider<Node> {
   async getChildren(node?: Node): Promise<Node[]> {
     if (!node) {
       const tracks = orderTracks(await this.loadTracks());
+      this.firstTrack = tracks[0]?.slug;
       return tracks.map(track => new TrackItem(track, this.collapsed, this.generation));
     }
     if (node instanceof TrackItem) {
@@ -73,11 +80,6 @@ export class ExerciseTreeProvider implements vscode.TreeDataProvider<Node> {
   private async loadTracks(): Promise<Track[]> {
     const scanned = await this.scanner.scan();
     this.local = new Map(scanned.map(track => [track.slug, track]));
-    try {
-      this.token = (await this.cli.getConfig()).token;
-    } catch {
-      this.token = '';
-    }
 
     const lastLocalEdit = (slug: string) =>
       Math.max(0, ...(this.local.get(slug)?.exercises.map(e => e.lastModified) ?? []));
@@ -99,7 +101,7 @@ export class ExerciseTreeProvider implements vscode.TreeDataProvider<Node> {
 
     const localOnly = scanned.filter(track => !tracks.some(t => t.slug === track.slug));
     if (localOnly.length > 0) {
-      const catalog = await this.cli.fetchTracks().catch(() => []);
+      const catalog = await this.api.tracks().catch(() => []);
       for (const track of localOnly) {
         tracks.push({
           slug: track.slug,
@@ -125,16 +127,13 @@ export class ExerciseTreeProvider implements vscode.TreeDataProvider<Node> {
         isUnlocked: e.is_unlocked,
         isRecommended: e.is_recommended,
       }))
-      : await this.cli.fetchExercises(trackSlug, this.token || undefined).catch(() => []);
+      : await this.api.exercises(trackSlug).catch(() => []);
 
-    let statuses = new Map<string, string>();
-    if (this.progress) {
-      statuses = new Map(this.progress.solutions
+    const statuses = this.progress
+      ? new Map(this.progress.solutions
         .filter(solution => solution.track.slug === trackSlug)
-        .map(solution => [solution.exercise.slug, solution.status]));
-    } else if (this.token) {
-      statuses = await this.cli.fetchUserSolutions(trackSlug, this.token).catch(() => statuses);
-    }
+        .map(solution => [solution.exercise.slug, solution.status]))
+      : await this.api.solutionStatuses(trackSlug).catch(() => new Map<string, string>());
 
     return buildTrackExercises(
       trackSlug,

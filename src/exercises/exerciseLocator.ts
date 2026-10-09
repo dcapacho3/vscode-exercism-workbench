@@ -12,7 +12,6 @@ export function buildExerciseFromPath(exercisePath: string, track: string, slug:
     track,
     path: exercisePath,
     status: ExerciseStatus.Downloaded,
-    hasReadme: fs.existsSync(path.join(exercisePath, 'README.md')),
     hasHints: fs.existsSync(path.join(exercisePath, 'HINTS.md')),
     hasHelp: fs.existsSync(path.join(exercisePath, 'HELP.md')),
     isDownloaded: true,

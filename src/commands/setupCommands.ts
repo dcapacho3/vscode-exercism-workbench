@@ -44,9 +44,9 @@ async function configure(workbench: Workbench): Promise<void> {
 
   const token = await vscode.window.showInputBox({
     prompt: action === 'Get My Token'
-      ? 'Paste your API token from exercism.org/settings/api_cli'
-      : 'Enter your Exercism API token',
-    placeHolder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+      ? 'Copy the token from the page that just opened and paste it here'
+      : 'Paste your Exercism API token',
+    placeHolder: 'Token from exercism.org/settings/api_cli',
     password: true,
     ignoreFocusOut: true,
   });
@@ -58,7 +58,7 @@ async function configure(workbench: Workbench): Promise<void> {
     async () => {
       try {
         await cli.configure(token);
-        cli.clearCache();
+        workbench.clearCache();
         await workbench.updateConfiguredContext();
         workbench.treeProvider.refresh();
       } catch (error) {

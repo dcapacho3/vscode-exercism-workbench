@@ -78,14 +78,14 @@ async function downloadFromPicker(workbench: Workbench): Promise<void> {
 async function trackItems(workbench: Workbench): Promise<vscode.QuickPickItem[]> {
   let items: vscode.QuickPickItem[];
   try {
-    const tracks = await workbench.cli.fetchTracks();
+    const tracks = await workbench.api.tracks();
     items = tracks.map(t => ({ label: t.title, description: `${t.numExercises} exercises`, detail: t.slug }));
   } catch {
     // Fall back to local tracks if the API fails.
     const scanned = await workbench.scanner.scan();
     items = scanned.map(t => ({
       label: slugToName(t.slug),
-      description: `${t.exercises.length} exercises (local)`,
+      description: `${t.exercises.length} downloaded`,
       detail: t.slug,
     }));
     items.push({ label: '$(edit) Enter another track slug…', description: 'For example: javascript, rust, go', detail: MANUAL_ENTRY });
@@ -96,21 +96,14 @@ async function trackItems(workbench: Workbench): Promise<vscode.QuickPickItem[]>
 
 /** Returns undefined if the learner cancels the manual-entry fallback. */
 async function exerciseItems(workbench: Workbench, track: string): Promise<vscode.QuickPickItem[] | undefined> {
-  const { cli, scanner } = workbench;
+  const { api, scanner } = workbench;
   let items: vscode.QuickPickItem[];
   try {
-    let token = '';
-    try {
-      token = (await cli.getConfig()).token;
-    } catch { /* no token */ }
-
-    const exercises = await cli.fetchExercises(track, token || undefined);
+    const exercises = await api.exercises(track);
     const localTrack = (await scanner.scan()).find(t => t.slug === track);
     const localSlugs = new Set(localTrack?.exercises.map(e => e.slug) ?? []);
-    let solutionMap = new Map<string, string>();
-    if (token) {
-      try { solutionMap = await cli.fetchUserSolutions(track, token); } catch { /* ignore */ }
-    }
+    // Statuses need a token; without one the picker just shows no progress.
+    const solutionMap = await api.solutionStatuses(track).catch(() => new Map<string, string>());
 
     // Recommended first, then the rest in learning-path order.
     const sorted = [...exercises].sort((a, b) => Number(b.isRecommended) - Number(a.isRecommended));
@@ -134,8 +127,8 @@ async function exerciseItems(workbench: Workbench, track: string): Promise<vscod
     });
   } catch {
     const input = await vscode.window.showInputBox({
-      prompt: `Enter the exercise slug for ${track}`,
-      placeHolder: 'hello-world',
+      prompt: `Could not list ${track} exercises. Type the exercise slug instead`,
+      placeHolder: 'for example hello-world',
     });
     if (!input) { return undefined; }
     items = [{ label: input, detail: input }];

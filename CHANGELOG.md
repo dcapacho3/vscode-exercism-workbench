@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.0
+
+- Split the Exercism CLI wrapper in two: ExercismCli runs the CLI, and the new
+  ExercismApi calls Exercism's web API and reads the token itself.
+- Read the response body as bytes before decoding, so a multi-byte character
+  split across network chunks no longer garbles the reply.
+- Type-check the tests along with the rest of the code.
+- Drop the unused README flag from the exercise model.
+- Reword the token, download and layout prompts.
+
+## 0.8.1
+
+- Refresh the tree on save only when the saved file belongs to a track other
+  than the one already at the top.
+
 ## 0.8.0
 
 - Order tracks by recent activity: the latest of Exercism's last activity on

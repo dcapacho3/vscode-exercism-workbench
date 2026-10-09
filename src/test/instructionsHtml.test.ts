@@ -10,7 +10,6 @@ function page(overrides: Partial<Exercise> = {}, documents: Partial<Instructions
       track: 'python',
       path: '/tmp/card-games',
       status: ExerciseStatus.Started,
-      hasReadme: true,
       hasHints: false,
       hasHelp: false,
       ...overrides,

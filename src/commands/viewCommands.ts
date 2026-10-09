@@ -9,7 +9,7 @@ import { Workbench } from '../workbench';
 
 
 export function registerViewCommands(workbench: Workbench): void {
-  const { cli, treeProvider } = workbench;
+  const { treeProvider } = workbench;
 
   workbench.register('exercismWorkbench.openInstructions', async (arg?: Exercise | ExerciseItem) => {
     workbench.log(`Command: exercismWorkbench.openInstructions triggered, arg=${JSON.stringify((arg instanceof ExerciseItem ? arg.exercise : arg)?.slug ?? 'none')}`);
@@ -32,7 +32,7 @@ export function registerViewCommands(workbench: Workbench): void {
   workbench.register('exercismWorkbench.toggleLayout', () => toggleLayout(workbench));
 
   workbench.register('exercismWorkbench.refreshTree', () => {
-    cli.clearCache();
+    workbench.clearCache();
     treeProvider.refresh();
   });
 
@@ -77,5 +77,5 @@ async function toggleLayout(workbench: Workbench): Promise<void> {
     }
   }
 
-  vscode.window.showInformationMessage(`Layout: ${newValue === 'left' ? 'Reader | Code' : 'Code | Reader'}`);
+  vscode.window.showInformationMessage(newValue === 'left' ? 'Instructions on the left, code on the right.' : 'Code on the left, instructions on the right.');
 }

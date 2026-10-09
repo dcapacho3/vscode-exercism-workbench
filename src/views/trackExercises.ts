@@ -1,15 +1,7 @@
+import { CatalogExercise } from '../api/exercismApi';
 import { Exercise, slugToName } from '../models';
 import { resolveExerciseStatus } from '../progress/exerciseStatus';
 import { ScannedExercise } from '../workspace/workspaceScanner';
-
-/** One entry from a track's exercise list, from the API or a progress snapshot. */
-export interface CatalogExercise {
-  slug: string;
-  title: string;
-  difficulty: string;
-  isUnlocked: boolean;
-  isRecommended: boolean;
-}
 
 /**
  * Builds a track's exercises in learning-path order, marking the ones on disk and
@@ -25,7 +17,6 @@ export function buildTrackExercises(
   const onDisk = new Map(local.map(exercise => [exercise.slug, exercise]));
   const fromDisk = (scanned: ScannedExercise | undefined) => ({
     path: scanned?.path ?? '',
-    hasReadme: scanned?.hasReadme ?? false,
     hasHints: scanned?.hasHints ?? false,
     hasHelp: scanned ? hasHelp(scanned.path) : false,
     isDownloaded: !!scanned,

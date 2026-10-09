@@ -1,16 +1,8 @@
+// The parts of the vscode API that modules under test touch. Settings always return their defaults.
 export const workspace = {
-  getConfiguration: () => ({
-    get: (key: string, defaultVal?: any) => defaultVal
-  }),
-  createFileSystemWatcher: () => ({
-    onDidCreate: () => {},
-    onDidDelete: () => {},
-    dispose: () => {}
-  })
+  getConfiguration: () => ({ get: <T>(_key: string, fallback?: T) => fallback }),
 };
 
-export const Uri = { joinPath: (...args: any[]) => args.join('/') };
-
 export class RelativePattern {
-  constructor(public base: string, public pattern: string) {}
+  constructor(readonly base: string, readonly pattern: string) {}
 }

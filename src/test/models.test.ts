@@ -1,20 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { slugToName } from '../models/exercise';
 
 describe('slugToName', () => {
-  it('converts "hello-world" to "Hello World"', () => {
+  it('capitalizes each word of a slug', () => {
     expect(slugToName('hello-world')).toBe('Hello World');
+    expect(slugToName('guidos-gorgeous-lasagna')).toBe('Guidos Gorgeous Lasagna');
   });
 
-  it('converts "two-fer" to "Two Fer"', () => {
-    expect(slugToName('two-fer')).toBe('Two Fer');
+  it('keeps digits and single words intact', () => {
+    expect(slugToName('leap')).toBe('Leap');
+    expect(slugToName('99-bottles')).toBe('99 Bottles');
   });
 
-  it('converts single word "simple" to "Simple"', () => {
-    expect(slugToName('simple')).toBe('Simple');
-  });
-
-  it('returns empty string for empty input', () => {
+  it('returns an empty name for an empty slug', () => {
     expect(slugToName('')).toBe('');
   });
 });

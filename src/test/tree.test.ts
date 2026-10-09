@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Exercise, ExerciseStatus, Track } from '../models';
-import { buildTrackExercises, CatalogExercise } from '../views/trackExercises';
+import { CatalogExercise } from '../api/exercismApi';
+import { buildTrackExercises } from '../views/trackExercises';
 import { orderExercises, orderTracks } from '../views/treeOrder';
 import { ScannedExercise } from '../workspace/workspaceScanner';
 
@@ -9,7 +10,7 @@ const track = (name: string, lastActivity?: number): Track =>
 
 const exercise = (slug: string, difficulty: string): Exercise => ({
   slug, name: slug, track: 'python', path: '', status: ExerciseStatus.Available,
-  hasReadme: false, hasHints: false, hasHelp: false, difficulty,
+  hasHints: false, hasHelp: false, difficulty,
 });
 
 const entry = (slug: string, extra: Partial<CatalogExercise> = {}): CatalogExercise =>

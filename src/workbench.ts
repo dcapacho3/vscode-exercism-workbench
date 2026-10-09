@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ExercismApi } from './api/exercismApi';
 import { ExercismCli } from './cli/exercismCli';
 import { WorkspaceScanner } from './workspace/workspaceScanner';
 import { ExerciseTreeProvider } from './views/exerciseTree';
@@ -8,6 +9,10 @@ import { BackgroundSyncMode, shouldRunBackgroundSync } from './sync/syncPolicy';
 /** Services and state shared by every command. */
 export class Workbench {
   readonly cli = new ExercismCli();
+  readonly api = new ExercismApi(
+    () => this.cli.getConfig().then(config => config.token, () => ''),
+    () => vscode.workspace.getConfiguration('exercismWorkbench').get<number>('cliTimeout', 60000),
+  );
   readonly scanner = new WorkspaceScanner(() => this.cli.getConfig());
   readonly output = vscode.window.createOutputChannel('Exercism Workbench');
   readonly treeProvider: ExerciseTreeProvider;
@@ -19,7 +24,7 @@ export class Workbench {
   constructor(readonly context: vscode.ExtensionContext) {
     context.subscriptions.push(this.output, this.logChannel);
     this.progress = context.globalState.get<WebProgressSnapshot>(WEB_PROGRESS_STORAGE_KEY);
-    this.treeProvider = new ExerciseTreeProvider(this.scanner, this.cli, this.progress);
+    this.treeProvider = new ExerciseTreeProvider(this.scanner, this.api, this.progress);
   }
 
   get webProgress(): WebProgressSnapshot | undefined {
@@ -40,8 +45,7 @@ export class Workbench {
   async syncProgress(): Promise<WebProgressSnapshot> {
     if (this.syncInFlight) { return this.syncInFlight; }
     const activeSync = (async () => {
-      const config = await this.cli.getConfig();
-      const progress = await this.cli.fetchWebProgress(config.token);
+      const progress = await this.api.progress();
       await this.saveWebProgress(progress);
       return progress;
     })();
@@ -54,8 +58,14 @@ export class Workbench {
   }
 
   /** Syncs after a change on Exercism; a failure only refreshes the tree from local state. */
-  async syncAfterChange(reason: string): Promise<void> {
+  /** Forgets cached CLI settings and API replies so the next read sees Exercism's current state. */
+  clearCache(): void {
     this.cli.clearCache();
+    this.api.clearCache();
+  }
+
+  async syncAfterChange(reason: string): Promise<void> {
+    this.clearCache();
     try {
       await this.syncProgress();
     } catch (error) {

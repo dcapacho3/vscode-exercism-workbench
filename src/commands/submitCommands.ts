@@ -110,8 +110,7 @@ async function markComplete(workbench: Workbench, arg?: Exercise | ExerciseItem)
   if (confirm !== 'Mark as Complete') { return; }
 
   try {
-    const { token } = await workbench.cli.getConfig();
-    await workbench.cli.completeSolution(id, token);
+    await workbench.api.complete(id);
   } catch (error) {
     const action = await vscode.window.showErrorMessage(
       `Could not mark ${exercise.slug} as complete: ${errorMessage(error)}`,

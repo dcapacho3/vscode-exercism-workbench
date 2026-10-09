@@ -26,7 +26,7 @@ export async function downloadWithProgress(
     async (_progress, token) => {
       try {
         downloadPath = await workbench.cli.download(track, slug, token);
-        workbench.cli.clearCache();
+        workbench.clearCache();
         workbench.treeProvider.refresh();
       } catch (error) {
         if (!token.isCancellationRequested) { downloadError = errorMessage(error); }
@@ -82,7 +82,7 @@ export async function ensureCompleteDownload(workbench: Workbench, exercise: Exe
 
     currentExercise = buildExerciseFromPath(repairedPath, exercise.track, exercise.slug);
     inspection = inspectSolutionFiles(repairedPath);
-    workbench.cli.clearCache();
+    workbench.clearCache();
     workbench.treeProvider.refresh();
   }
 
