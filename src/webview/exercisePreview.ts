@@ -147,7 +147,7 @@ export class ExercisePreviewPanel {
     const webviewColumn = readerPosition === 'left' ? vscode.ViewColumn.One : vscode.ViewColumn.Beside;
 
     const md = new MarkdownIt({
-      html: false,
+      html: true, // Exercism READMEs use raw HTML (tables, <br>); the CSP blocks any script without our nonce.
       linkify: true,
       typographer: true,
       highlight: (str: string, lang: string): string => {
@@ -305,6 +305,8 @@ export class ExercisePreviewPanel {
     const csp = [
       `default-src 'none'`,
       `style-src ${webview.cspSource} 'nonce-${nonce}'`,
+      // READMEs align table cells with style attributes; <style> blocks still need the nonce.
+      `style-src-attr 'unsafe-inline'`,
       `script-src 'nonce-${nonce}'`,
       `img-src ${webview.cspSource} https: data:`
     ].join('; ');

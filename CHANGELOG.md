@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+- Render the raw HTML some exercise instructions use, such as tables and line
+  breaks, instead of showing the tags as text. Allow inline style attributes so
+  their alignment shows as it does on the website.
+
 ## 0.6.0
 
 - Mark exercises complete from VS Code. The CLI has no command for this, so
