@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1
+
+- Treat an exercise as incomplete when a test file listed in
+  `.exercism/config.json` is missing, so the Repair Download prompt appears
+  instead of the test run failing with "file not found".
+- Keep existing solution code when Repair Download runs, since
+  `exercism download --force` overwrites every file.
+
 ## 0.5.0
 
 - Verify the complete browse, download, open, test, submit, and progress-sync

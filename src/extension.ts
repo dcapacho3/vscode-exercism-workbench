@@ -137,6 +137,8 @@ export function activate(context: vscode.ExtensionContext): void {
 			);
 			if (action !== 'Repair Download') { return undefined; }
 
+			// --force overwrites every file, so keep the learner's existing solution code.
+			const savedSolutions = inspection.files.map(file => ({ file, content: fs.readFileSync(file) }));
 			let repairedPath = '';
 			let repairError = '';
 			await vscode.window.withProgress(
@@ -152,6 +154,8 @@ export function activate(context: vscode.ExtensionContext): void {
 						if (!token.isCancellationRequested) {
 							repairError = error instanceof Error ? error.message : String(error);
 						}
+					} finally {
+						for (const { file, content } of savedSolutions) { fs.writeFileSync(file, content); }
 					}
 				},
 			);

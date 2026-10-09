@@ -50,6 +50,21 @@ describe('inspectSolutionFiles', () => {
     });
   });
 
+  it('reports an incomplete download when configured test files are missing', () => {
+    const directory = exerciseDirectory();
+    fs.writeFileSync(path.join(directory, '.exercism', 'config.json'), JSON.stringify({
+      files: { solution: ['armstrong_numbers.py'], test: ['armstrong_numbers_test.py'] },
+    }));
+    fs.writeFileSync(path.join(directory, 'armstrong_numbers.py'), 'pass\n');
+
+    expect(inspectSolutionFiles(directory)).toEqual({
+      files: [path.join(directory, 'armstrong_numbers.py')],
+      missing: ['armstrong_numbers_test.py'],
+      usesExerciseConfig: true,
+      isIncomplete: true,
+    });
+  });
+
   it('does not treat exercise documentation as a solution', () => {
     const directory = exerciseDirectory();
     fs.writeFileSync(path.join(directory, 'README.md'), 'instructions\n');

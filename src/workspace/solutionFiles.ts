@@ -22,7 +22,10 @@ export function inspectSolutionFiles(exercisePath: string): SolutionFileInspecti
         const files = expected
           .map(file => path.join(exercisePath, file))
           .filter(file => fs.existsSync(file));
-        const missing = expected.filter(file => !fs.existsSync(path.join(exercisePath, file)));
+        const tests: unknown[] = Array.isArray(config.files.test) ? config.files.test : [];
+        const missing = [...expected, ...tests]
+          .filter((file: unknown): file is string => typeof file === 'string' && file.length > 0)
+          .filter(file => !fs.existsSync(path.join(exercisePath, file)));
         return { files, missing, usesExerciseConfig: true, isIncomplete: missing.length > 0 };
       }
     } catch {
