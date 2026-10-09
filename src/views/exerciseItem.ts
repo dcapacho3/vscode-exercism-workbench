@@ -7,7 +7,7 @@ export class ExerciseItem extends vscode.TreeItem {
     const isCompleted = exercise.status === ExerciseStatus.Completed
       || exercise.status === ExerciseStatus.Published;
     this.contextValue = exercise.isDownloaded
-      ? (isCompleted ? 'exerciseCompleted' : 'exercise')
+      ? (isCompleted ? 'exerciseCompleted' : exercise.status === ExerciseStatus.Iterated ? 'exerciseIterated' : 'exercise')
       : 'exerciseRemote';
 
     // Keep descriptions readable; the icon carries the primary status signal.
@@ -19,6 +19,7 @@ export class ExerciseItem extends vscode.TreeItem {
     if (exercise.isIncomplete) { parts.push('repair needed'); }
     if (exercise.status === ExerciseStatus.Published) { parts.push('published'); }
     else if (exercise.status === ExerciseStatus.Completed) { parts.push('completed'); }
+    else if (exercise.status === ExerciseStatus.Iterated) { parts.push('submitted'); }
     else if (exercise.status === ExerciseStatus.Started || exercise.status === ExerciseStatus.Downloaded) {
       parts.push('in progress');
     }
@@ -36,6 +37,7 @@ export class ExerciseItem extends vscode.TreeItem {
         case ExerciseStatus.Completed:
           this.iconPath = new vscode.ThemeIcon('pass-filled', new vscode.ThemeColor('testing.iconPassed'));
           break;
+        case ExerciseStatus.Iterated:
         case ExerciseStatus.Started:
         case ExerciseStatus.Downloaded:
           this.iconPath = new vscode.ThemeIcon('edit', new vscode.ThemeColor('charts.blue'));

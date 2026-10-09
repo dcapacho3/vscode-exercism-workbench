@@ -8,7 +8,8 @@ export function resolveExerciseStatus(
 ): ExerciseStatus {
   if (solutionStatus === 'published') { return ExerciseStatus.Published; }
   if (solutionStatus === 'completed') { return ExerciseStatus.Completed; }
-  if (solutionStatus === 'started' || solutionStatus === 'iterated') {
+  if (solutionStatus === 'iterated') { return ExerciseStatus.Iterated; }
+  if (solutionStatus === 'started') {
     return ExerciseStatus.Started;
   }
   if (isDownloaded) {

@@ -11,6 +11,11 @@ describe('resolveExerciseStatus', () => {
     expect(resolveExerciseStatus('published', true, true)).toBe(ExerciseStatus.Published);
   });
 
+  it('separates submitted exercises from unsubmitted ones', () => {
+    expect(resolveExerciseStatus('iterated', true, true)).toBe(ExerciseStatus.Iterated);
+    expect(resolveExerciseStatus('started', true, true)).toBe(ExerciseStatus.Started);
+  });
+
   it('shows a downloaded but unsubmitted exercise as in progress', () => {
     expect(resolveExerciseStatus(undefined, true, true)).toBe(ExerciseStatus.Started);
   });

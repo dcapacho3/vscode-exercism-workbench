@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { HLJSApi } from 'highlight.js';
-import { Exercise } from '../models/exercise';
+import { Exercise, ExerciseStatus } from '../models/exercise';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const MarkdownIt = require('markdown-it') as typeof import('markdown-it');
@@ -194,6 +194,15 @@ export class ExercisePreviewPanel {
     return ExercisePreviewPanel.currentPanel;
   }
 
+  // A submit means at least one iteration exists, so relabel an open panel without waiting for a sync.
+  static markSubmitted(exercise: Exercise): void {
+    const panel = ExercisePreviewPanel.currentPanel;
+    const shown = panel?._exercise;
+    if (!panel || !shown || shown.slug !== exercise.slug || shown.track !== exercise.track) { return; }
+    if (shown.status === ExerciseStatus.Completed || shown.status === ExerciseStatus.Published) { return; }
+    panel.update({ ...shown, status: ExerciseStatus.Iterated });
+  }
+
   static getCurrentExercise(): Exercise | undefined {
     return ExercisePreviewPanel.currentPanel?._exercise;
   }
@@ -241,13 +250,14 @@ export class ExercisePreviewPanel {
     const statusLabels: Record<string, string> = {
       published: 'Published',
       completed: 'Completed',
+      iterated: 'Submitted',
       started: 'In progress',
       downloaded: 'Downloaded',
       available: 'Available',
       locked: 'Locked',
     };
     const statusLabel = statusLabels[exercise.status] ?? 'Exercise';
-    const submitLabel = exercise.status === 'completed' || exercise.status === 'published'
+    const submitLabel = exercise.status === 'completed' || exercise.status === 'published' || exercise.status === 'iterated'
       ? 'Submit new iteration'
       : 'Submit solution';
 

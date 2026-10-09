@@ -2,7 +2,7 @@
   "name": "exercism-workbench",
   "displayName": "Exercism Workbench",
   "description": "A progress-aware Exercism workspace for VS Code: browse learning paths, download exercises, run tests, and submit solutions.",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "publisher": "dcapacho3",
   "license": "MIT",
   "engines": {
@@ -87,6 +87,11 @@
         "command": "exercismWorkbench.submitIteration",
         "title": "Exercism Workbench: Submit New Iteration",
         "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "exercismWorkbench.markComplete",
+        "title": "Exercism Workbench: Mark as Complete on Exercism",
+        "icon": "$(pass)"
       },
       {
         "command": "exercismWorkbench.openInstructions",
@@ -190,12 +195,17 @@
         },
         {
           "command": "exercismWorkbench.test",
-          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseCompleted)",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseIterated || viewItem == exerciseCompleted)",
           "group": "inline"
         },
         {
           "command": "exercismWorkbench.submit",
           "when": "view == exercismWorkbench.explorer && viewItem == exercise",
+          "group": "inline"
+        },
+        {
+          "command": "exercismWorkbench.submitIteration",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exerciseIterated || viewItem == exerciseCompleted)",
           "group": "inline"
         },
         {
@@ -205,7 +215,7 @@
         },
         {
           "command": "exercismWorkbench.test",
-          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseCompleted)",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseIterated || viewItem == exerciseCompleted)",
           "group": "1_actions@1"
         },
         {
@@ -215,17 +225,22 @@
         },
         {
           "command": "exercismWorkbench.submitIteration",
-          "when": "view == exercismWorkbench.explorer && viewItem == exerciseCompleted",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exerciseIterated || viewItem == exerciseCompleted)",
           "group": "1_actions@2"
         },
         {
+          "command": "exercismWorkbench.markComplete",
+          "when": "view == exercismWorkbench.explorer && viewItem == exerciseIterated",
+          "group": "1_actions@3"
+        },
+        {
           "command": "exercismWorkbench.openInstructions",
-          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseCompleted)",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseIterated || viewItem == exerciseCompleted)",
           "group": "2_view@1"
         },
         {
           "command": "exercismWorkbench.openInBrowser",
-          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseCompleted)",
+          "when": "view == exercismWorkbench.explorer && (viewItem == exercise || viewItem == exerciseIterated || viewItem == exerciseCompleted)",
           "group": "2_view@2"
         }
       ]

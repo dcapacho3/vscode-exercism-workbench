@@ -723,13 +723,14 @@ export function activate(context: vscode.ExtensionContext): void {
 			if (cancelled || !submitResult) { return; }
 			if (submitResult.success) {
 				cli.clearCache();
+				ExercisePreviewPanel.markSubmitted(exercise);
 				try {
 					await fetchAndSaveWebProgress();
 				} catch (error) {
 					log(`Post-submit progress sync skipped: ${error instanceof Error ? error.message : String(error)}`);
 					treeProvider.refresh();
 				}
-				const buttons = submitResult.url ? ['Open in Browser'] : [];
+				const buttons = submitResult.url ? ['Open in Browser', 'Mark as Complete'] : ['Mark as Complete'];
 				const action = await vscode.window.showInformationMessage(
 					`Solution submitted for ${exercise.slug}!`,
 					...buttons
@@ -737,6 +738,8 @@ export function activate(context: vscode.ExtensionContext): void {
 				if (action === 'Open in Browser' && submitResult.url) {
 					lastBackgroundSync = 0;
 					vscode.env.openExternal(vscode.Uri.parse(submitResult.url));
+				} else if (action === 'Mark as Complete') {
+					await vscode.commands.executeCommand('exercismWorkbench.markComplete', exercise);
 				}
 			} else {
 				vscode.window.showErrorMessage(`Submit failed: ${submitResult.output}`);
@@ -747,6 +750,15 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('exercismWorkbench.submitIteration', (arg?: Exercise | ExerciseItem) => {
 			return vscode.commands.executeCommand('exercismWorkbench.submit', arg);
+		})
+	);
+
+	// The Exercism CLI cannot mark a solution complete, so send the learner to the exercise page.
+	context.subscriptions.push(
+		vscode.commands.registerCommand('exercismWorkbench.markComplete', async (arg?: Exercise | ExerciseItem) => {
+			await vscode.commands.executeCommand('exercismWorkbench.openInBrowser', arg);
+			lastBackgroundSync = 0;
+			vscode.window.showInformationMessage('Use "Mark as complete" on the Exercism page. The sidebar updates on the next sync.');
 		})
 	);
 

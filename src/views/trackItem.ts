@@ -7,6 +7,7 @@ export class TrackItem extends vscode.TreeItem {
     const doneCount = track.exercises.filter(e =>
       e.status === ExerciseStatus.Published ||
       e.status === ExerciseStatus.Completed ||
+      e.status === ExerciseStatus.Iterated ||
       e.status === ExerciseStatus.Started ||
       e.status === ExerciseStatus.Downloaded
     ).length;

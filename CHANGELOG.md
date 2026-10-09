@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.2
+
+- Show submitted exercises as "submitted" and replace the Submit Solution
+  button with Submit New Iteration once the first iteration is in.
+- Add Mark as Complete, which opens the exercise page on Exercism, since the
+  CLI cannot mark a solution complete. Submitting also offers it.
+
 ## 0.5.1
 
 - Treat an exercise as incomplete when a test file listed in

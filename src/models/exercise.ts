@@ -1,6 +1,7 @@
 export enum ExerciseStatus {
   Published = 'published',      // completed and published
   Completed = 'completed',      // completed but not published
+  Iterated = 'iterated',        // submitted at least once but not completed
   Started = 'started',          // started but not completed
   Available = 'available',      // unlocked but not started
   Locked = 'locked',            // not yet unlocked
