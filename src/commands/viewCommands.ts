@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Exercise } from '../models';
 import { ExerciseItem } from '../views/exerciseItem';
-import { ExercisePreviewPanel } from '../webview/exercisePreview';
+import { InstructionsPanel } from '../webview/instructionsPanel';
 import { readExerciseMetadata, resolveExercise } from '../exercises/exerciseLocator';
 import { openExerciseWorkspace } from '../exercises/exerciseWorkspace';
 import { Workbench } from '../workbench';
@@ -56,14 +56,14 @@ async function toggleLayout(workbench: Workbench): Promise<void> {
   await config.update('readerPosition', newValue, vscode.ConfigurationTarget.Global);
 
   // Collect state before closing anything.
-  const currentExercise = ExercisePreviewPanel.getCurrentExercise();
+  const currentExercise = InstructionsPanel.currentExercise();
   const openFileUris = vscode.window.tabGroups.all
     .flatMap(group => group.tabs)
     .filter(tab => tab.input instanceof vscode.TabInputText)
     .map(tab => (tab.input as vscode.TabInputText).uri);
 
   if (currentExercise) {
-    ExercisePreviewPanel.dispose();
+    InstructionsPanel.close();
     await vscode.commands.executeCommand('workbench.action.closeAllEditors');
 
     const reopenFiles = async (column: vscode.ViewColumn) => {
@@ -73,12 +73,12 @@ async function toggleLayout(workbench: Workbench): Promise<void> {
     };
     if (newValue === 'left') {
       // Reader left (column 1), code right (column 2).
-      ExercisePreviewPanel.show(currentExercise, workbench.context.extensionUri);
+      InstructionsPanel.show(currentExercise, workbench.context.extensionUri);
       await reopenFiles(vscode.ViewColumn.Two);
     } else {
       // Code left (column 1), reader right (column 2).
       await reopenFiles(vscode.ViewColumn.One);
-      ExercisePreviewPanel.show(currentExercise, workbench.context.extensionUri);
+      InstructionsPanel.show(currentExercise, workbench.context.extensionUri);
     }
   }
 

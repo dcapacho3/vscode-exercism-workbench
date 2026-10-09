@@ -4,7 +4,7 @@ import { SubmitResult } from '../cli/exercismCli';
 import { explainSubmitFailure } from '../cli/submitDiagnostics';
 import { Exercise } from '../models';
 import { ExerciseItem } from '../views/exerciseItem';
-import { ExercisePreviewPanel } from '../webview/exercisePreview';
+import { InstructionsPanel } from '../webview/instructionsPanel';
 import { inspectSolutionFiles } from '../workspace/solutionFiles';
 import { readExerciseMetadata, resolveExercise } from '../exercises/exerciseLocator';
 import { errorMessage, showCliNotInstalledError, Workbench } from '../workbench';
@@ -54,7 +54,7 @@ async function submit(workbench: Workbench, arg?: Exercise | ExerciseItem): Prom
     return;
   }
 
-  ExercisePreviewPanel.markSubmitted(exercise);
+  InstructionsPanel.markSubmitted(exercise);
   await workbench.syncAfterChange('Post-submit');
   const url = result.url;
   const buttons = url ? ['Open in Browser', 'Mark as Complete'] : ['Mark as Complete'];
@@ -123,7 +123,7 @@ async function markComplete(workbench: Workbench, arg?: Exercise | ExerciseItem)
     return;
   }
 
-  ExercisePreviewPanel.markCompleted(exercise);
+  InstructionsPanel.markCompleted(exercise);
   await workbench.syncAfterChange('Post-complete');
   vscode.window.showInformationMessage(`${exercise.slug} is complete.`);
 }

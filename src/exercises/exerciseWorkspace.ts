@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { Exercise } from '../models';
-import { ExercisePreviewPanel } from '../webview/exercisePreview';
+import { InstructionsPanel } from '../webview/instructionsPanel';
 import { inspectSolutionFiles } from '../workspace/solutionFiles';
 import { errorMessage, Workbench } from '../workbench';
 import { buildExerciseFromPath } from './exerciseLocator';
@@ -104,5 +104,5 @@ export async function openExerciseWorkspace(workbench: Workbench, exercise: Exer
   workbench.log(`Opening solution file: ${mainFile}`);
   const doc = await vscode.workspace.openTextDocument(mainFile);
   await vscode.window.showTextDocument(doc, editorColumn);
-  ExercisePreviewPanel.show(currentExercise, workbench.context.extensionUri);
+  InstructionsPanel.show(currentExercise, workbench.context.extensionUri);
 }

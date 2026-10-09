@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0
+
+- Rebuild the instructions panel. Hints and Help now open as tabs next to the
+  instructions instead of fold-out sections at the bottom, and each tab keeps
+  its own scroll position.
+- Color code blocks with the current VS Code theme.
+- Arrow keys move between tabs.
+
 ## 0.6.3
 
 - Show why a submit failed. The CLI prints API errors to stderr, which was
