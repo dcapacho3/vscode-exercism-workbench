@@ -98,10 +98,11 @@ export class ExercismCli {
     });
   }
 
-  private async getJson(url: string, headers: Record<string, string> = {}): Promise<any> {
+  private async getJson(url: string, headers: Record<string, string> = {}, method = 'GET'): Promise<any> {
     const https = await import('https');
     return new Promise((resolve, reject) => {
-      const request = https.get(url, {
+      const request = https.request(url, {
+        method,
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'exercism-workbench-vscode',
@@ -137,6 +138,7 @@ export class ExercismCli {
       request.setTimeout(this.timeout, () => {
         request.destroy(new Error(`Request timed out: ${url}`));
       });
+      request.end();
     });
   }
 
@@ -285,6 +287,16 @@ export class ExercismCli {
     if (!token) { throw new Error('Exercism CLI is not configured with an API token.'); }
     const headers = { 'Authorization': `Bearer ${token}` };
     return fetchProgressSnapshot(url => this.getJson(url, headers));
+  }
+
+  // The CLI has no complete command; this is the endpoint the website's "Mark as complete" button calls.
+  async completeSolution(solutionId: string, token: string): Promise<void> {
+    if (!token) { throw new Error('Exercism CLI is not configured with an API token.'); }
+    await this.getJson(
+      `https://api.exercism.org/v2/solutions/${encodeURIComponent(solutionId)}/complete`,
+      { 'Authorization': `Bearer ${token}` },
+      'PATCH',
+    );
   }
 
   async configure(token: string): Promise<void> {

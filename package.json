@@ -2,7 +2,7 @@
   "name": "exercism-workbench",
   "displayName": "Exercism Workbench",
   "description": "A progress-aware Exercism workspace for VS Code: browse learning paths, download exercises, run tests, and submit solutions.",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "publisher": "dcapacho3",
   "license": "MIT",
   "engines": {
@@ -90,7 +90,7 @@
       },
       {
         "command": "exercismWorkbench.markComplete",
-        "title": "Exercism Workbench: Mark as Complete on Exercism",
+        "title": "Exercism Workbench: Mark as Complete",
         "icon": "$(pass)"
       },
       {

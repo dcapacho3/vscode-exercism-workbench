@@ -704,6 +704,25 @@ export function activate(context: vscode.ExtensionContext): void {
 				vscode.window.showWarningMessage('No solution files found to submit.');
 				return;
 			}
+			// Exercism's analyzer flags lint problems, so refuse to submit while the editor reports any.
+			// shortcut: relies on the linters VS Code already runs; a file no linter has analyzed passes, run our own linter per track if that bites.
+			const lintProblems = solutionFiles.flatMap(file =>
+				vscode.languages.getDiagnostics(vscode.Uri.file(file))
+					.filter(d => d.severity <= vscode.DiagnosticSeverity.Warning)
+					.map(d => `${path.basename(file)}:${d.range.start.line + 1}: ${d.message}`));
+			if (lintProblems.length > 0) {
+				outputChannel.clear();
+				outputChannel.appendLine(`Submit blocked for ${exercise.slug}. Fix these problems first:\n`);
+				outputChannel.appendLine(lintProblems.join('\n'));
+				const action = await vscode.window.showErrorMessage(
+					`Fix ${lintProblems.length} lint problem(s) in ${exercise.slug} before submitting.`,
+					'Show Problems',
+				);
+				if (action === 'Show Problems') {
+					await vscode.commands.executeCommand('workbench.actions.view.problems');
+				}
+				return;
+			}
 			let submitResult: SubmitResult | undefined;
 			let cancelled = false;
 
@@ -753,12 +772,57 @@ export function activate(context: vscode.ExtensionContext): void {
 		})
 	);
 
-	// The Exercism CLI cannot mark a solution complete, so send the learner to the exercise page.
 	context.subscriptions.push(
 		vscode.commands.registerCommand('exercismWorkbench.markComplete', async (arg?: Exercise | ExerciseItem) => {
-			await vscode.commands.executeCommand('exercismWorkbench.openInBrowser', arg);
-			lastBackgroundSync = 0;
-			vscode.window.showInformationMessage('Use "Mark as complete" on the Exercism page. The sidebar updates on the next sync.');
+			const exerciseArg = arg instanceof ExerciseItem ? arg.exercise : arg;
+			const exercise = exerciseArg ?? (await detectExercise(scanner));
+			if (!exercise) {
+				vscode.window.showWarningMessage('No exercise detected. Open an exercise file first.');
+				return;
+			}
+			let solutionId = '';
+			try {
+				const metadata = JSON.parse(fs.readFileSync(path.join(exercise.path, '.exercism', 'metadata.json'), 'utf8'));
+				solutionId = typeof metadata.id === 'string' ? metadata.id : '';
+			} catch {
+				// Handled below.
+			}
+			if (!solutionId) {
+				vscode.window.showErrorMessage(`Could not find the solution id for ${exercise.slug} in .exercism/metadata.json.`);
+				return;
+			}
+			// Exercism has no way to undo completion, so ask first.
+			const confirm = await vscode.window.showWarningMessage(
+				`Mark ${exercise.slug} as complete on Exercism? This cannot be undone. You can still submit new iterations.`,
+				{ modal: true },
+				'Mark as Complete',
+			);
+			if (confirm !== 'Mark as Complete') { return; }
+
+			try {
+				const { token } = await cli.getConfig();
+				await cli.completeSolution(solutionId, token);
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				const action = await vscode.window.showErrorMessage(
+					`Could not mark ${exercise.slug} as complete: ${message}`,
+					'Open on Exercism',
+				);
+				if (action === 'Open on Exercism') {
+					await vscode.commands.executeCommand('exercismWorkbench.openInBrowser', exercise);
+				}
+				return;
+			}
+
+			ExercisePreviewPanel.markCompleted(exercise);
+			cli.clearCache();
+			try {
+				await fetchAndSaveWebProgress();
+			} catch (error) {
+				log(`Post-complete progress sync skipped: ${error instanceof Error ? error.message : String(error)}`);
+				treeProvider.refresh();
+			}
+			vscode.window.showInformationMessage(`${exercise.slug} marked as complete.`);
 		})
 	);
 

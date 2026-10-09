@@ -108,6 +108,9 @@ export class ExercisePreviewPanel {
         case 'submit':
           vscode.commands.executeCommand('exercismWorkbench.submit', this._exercise);
           break;
+        case 'markComplete':
+          vscode.commands.executeCommand('exercismWorkbench.markComplete', this._exercise);
+          break;
         case 'openInBrowser':
           vscode.commands.executeCommand('exercismWorkbench.openInBrowser', this._exercise);
           break;
@@ -196,11 +199,19 @@ export class ExercisePreviewPanel {
 
   // A submit means at least one iteration exists, so relabel an open panel without waiting for a sync.
   static markSubmitted(exercise: Exercise): void {
+    ExercisePreviewPanel.setShownStatus(exercise, ExerciseStatus.Iterated);
+  }
+
+  static markCompleted(exercise: Exercise): void {
+    ExercisePreviewPanel.setShownStatus(exercise, ExerciseStatus.Completed);
+  }
+
+  private static setShownStatus(exercise: Exercise, status: ExerciseStatus): void {
     const panel = ExercisePreviewPanel.currentPanel;
     const shown = panel?._exercise;
     if (!panel || !shown || shown.slug !== exercise.slug || shown.track !== exercise.track) { return; }
     if (shown.status === ExerciseStatus.Completed || shown.status === ExerciseStatus.Published) { return; }
-    panel.update({ ...shown, status: ExerciseStatus.Iterated });
+    panel.update({ ...shown, status });
   }
 
   static getCurrentExercise(): Exercise | undefined {
@@ -333,6 +344,7 @@ export class ExercisePreviewPanel {
     <div class="action-group primary-actions">
       <button class="action-button primary action-test" id="btn-run-tests">Run tests</button>
       <button class="action-button action-submit" id="btn-submit">${submitLabel}</button>
+      ${exercise.status === 'iterated' ? '<button class="action-button action-complete" id="btn-complete">Mark as complete</button>' : ''}
     </div>
     <div class="action-group utility-actions">
       <button class="action-button quiet action-copy" id="btn-copy" title="Copy instructions as Markdown">Copy</button>
@@ -362,6 +374,10 @@ export class ExercisePreviewPanel {
 
       document.getElementById('btn-submit').addEventListener('click', function() {
         vscode.postMessage({ command: 'submit' });
+      });
+
+      document.getElementById('btn-complete')?.addEventListener('click', function() {
+        vscode.postMessage({ command: 'markComplete' });
       });
 
       document.getElementById('btn-copy').addEventListener('click', function() {

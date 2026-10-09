@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0
+
+- Mark exercises complete from VS Code. The CLI has no command for this, so
+  the extension calls the same Exercism API endpoint the website uses, with
+  the CLI token, after asking for confirmation. The instructions panel gains
+  a "Mark as complete" button for submitted exercises.
+- Refuse to submit while VS Code reports errors or warnings in the solution
+  files, since Exercism's analyzer flags lint problems.
+
 ## 0.5.2
 
 - Show submitted exercises as "submitted" and replace the Submit Solution
